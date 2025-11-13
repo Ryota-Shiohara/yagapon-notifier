@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    /* 基本設定 */
+    "target": "ES2022",                                /* Node.js v18以降ならこれでOK */
+    "module": "commonjs",                              /* 初心者には "nodenext" より "commonjs" の方がハマりポイントが少ないです */
+    "moduleResolution": "node",
+    "esModuleInterop": true,                           /* 互換性を高める魔法の設定 */
+    "skipLibCheck": true,                              /* ライブラリの型チェックをスキップして高速化 */
+    "forceConsistentCasingInFileNames": true,
+
+    /* ディレクトリ設定（重要） */
+    "rootDir": "./src",                                /* ソースコードの場所 */
+    "outDir": "./dist",                                /* 変換後の出力先 */
+
+    /* 厳格な型チェック */
+    "strict": true,                                    /* 基本的な厳しさはON */
+    // "noUncheckedIndexedAccess": true,               /* 慣れるまではOFF（コメントアウト）推奨 */
+
+    /* その他 */
+    "sourceMap": true,                                 /* デバッグしやすくする */
+    "declaration": true,                               /* 型定義ファイルを生成 */
+    "isolatedModules": true                            /* ts-node との互換性のため必要 */
+  },
+  "include": ["src/**/*"],                             /* srcフォルダの中身だけを対象にする */
+  "exclude": ["node_modules"]
+}
