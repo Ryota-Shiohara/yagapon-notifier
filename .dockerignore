@@ -1,0 +1,47 @@
+# Node.js
+node_modules
+npm-debug.log
+yarn-error.log
+
+# ビルド成果物
+dist
+*.tsbuildinfo
+
+# 環境変数ファイル
+.env
+.env.local
+.env.*.local
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ログ
+logs
+*.log
+
+# テスト・カバレッジ
+coverage
+.nyc_output
+
+# その他
+README.md
+.editorconfig
+.prettierrc
+.eslintrc*

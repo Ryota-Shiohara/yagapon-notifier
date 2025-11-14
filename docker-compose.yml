@@ -1,0 +1,46 @@
+services:
+  # ========================================
+  # Discordボットサービス
+  # ========================================
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: yagapon-notifier-bot
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - BOT_NOTIFY_SECRET=${BOT_NOTIFY_SECRET}
+      - NOTIFICATION_CHANNEL_ID=${NOTIFICATION_CHANNEL_ID}
+    # ポートマッピング（開発・デバッグ用、Cloudflare Tunnel経由なら不要）
+    ports:
+      - "3000:3000"
+    networks:
+      - bot-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ========================================
+  # Cloudflare Tunnelサービス
+  # ========================================
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: yagapon-notifier-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      - bot-network
+    depends_on:
+      - bot
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+
+networks:
+  bot-network:
+    driver: bridge
