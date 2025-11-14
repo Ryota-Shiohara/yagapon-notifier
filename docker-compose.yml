@@ -31,6 +31,7 @@ services:
   # ========================================
   cloudflared:
     image: cloudflare/cloudflared:latest
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
     container_name: yagapon-notifier-tunnel
     restart: unless-stopped
     command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
