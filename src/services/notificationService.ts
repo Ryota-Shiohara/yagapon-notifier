@@ -38,13 +38,29 @@ export class NotificationService {
       );
     }
 
+    // デバッグ: 受け取った時間データを確認
+    console.log('startTime:', startTime, 'type:', typeof startTime);
+    console.log('endTime:', endTime, 'type:', typeof endTime);
+
     // 時間をHH:MM形式にフォーマット
     const formatTime = (
-      time: Date | string | undefined
+      time: Date | string | undefined | any
     ): string | undefined => {
       if (!time) return undefined;
 
-      const date = time instanceof Date ? time : new Date(time);
+      // Firebase Timestampの場合
+      let date: Date;
+      if (time.toDate && typeof time.toDate === 'function') {
+        date = time.toDate();
+      } else if (time instanceof Date) {
+        date = time;
+      } else if (typeof time === 'string') {
+        date = new Date(time);
+      } else {
+        console.warn('Unknown time format:', time);
+        return undefined;
+      }
+
       const hours = date.getHours().toString().padStart(2, '0');
       const minutes = date.getMinutes().toString().padStart(2, '0');
       return `${hours}:${minutes}`;
@@ -52,11 +68,23 @@ export class NotificationService {
 
     // 日付をMM/DD（曜日）形式にフォーマット
     const formatDate = (
-      time: Date | string | undefined
+      time: Date | string | undefined | any
     ): string | undefined => {
       if (!time) return undefined;
 
-      const date = time instanceof Date ? time : new Date(time);
+      // Firebase Timestampの場合
+      let date: Date;
+      if (time.toDate && typeof time.toDate === 'function') {
+        date = time.toDate();
+      } else if (time instanceof Date) {
+        date = time;
+      } else if (typeof time === 'string') {
+        date = new Date(time);
+      } else {
+        console.warn('Unknown date format:', time);
+        return undefined;
+      }
+
       const month = (date.getMonth() + 1).toString();
       const day = date.getDate().toString();
       const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
