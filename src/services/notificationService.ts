@@ -132,7 +132,6 @@ export class NotificationService {
     const embed = new EmbedBuilder().setColor(getDepartmentColor(department));
 
     const embedDescription = `
-## 明日は${title}だぽん！<:face:1439173874368381011>
 
 ${description || ''}
 
@@ -151,9 +150,14 @@ ${description || ''}
       embed.setFooter({ text: department + (section ? `（${section}）` : '') });
     }
 
+    // メッセージのコンテンツを作成
+    const mentionPart = roleId ? `<@&${roleId}>\n` : '';
+    const titlePart = `# 明日は${title}だぽん！<:face:1439173874368381011>`;
+    const messageContent = `${mentionPart}${titlePart}`;
+
     // チャンネルにEmbedを送信
     await (channel as TextChannel).send({
-      content: roleId ? `<@&${roleId}>` : undefined,
+      content: messageContent,
       embeds: [embed],
     });
 
