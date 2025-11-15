@@ -14,13 +14,23 @@ services:
       - DISCORD_TOKEN=${DISCORD_TOKEN}
       - BOT_NOTIFY_SECRET=${BOT_NOTIFY_SECRET}
       - NOTIFICATION_CHANNEL_ID=${NOTIFICATION_CHANNEL_ID}
+      - DEPARTMENT_CHANNELS=${DEPARTMENT_CHANNELS}
+      - DEPARTMENT_ROLES=${DEPARTMENT_ROLES}
     # ポートマッピング（開発・デバッグ用、Cloudflare Tunnel経由なら不要）
     ports:
-      - "3000:3000"
+      - '3000:3000'
     networks:
       - bot-network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      test:
+        [
+          'CMD',
+          'wget',
+          '--quiet',
+          '--tries=1',
+          '--spider',
+          'http://localhost:3000/health',
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -39,6 +49,8 @@ services:
       - bot-network
     depends_on:
       - bot
+    security_opt:
+      - seccomp=unconfined
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
 
