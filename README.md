@@ -72,18 +72,21 @@ PC開発 → GitHub管理 → Raspberry Pi運用 のワークフローに対応�
 ## 必要な環境
 
 ### PC開発環境
+
 - **Node.js**: v18以上
 - **npm**: v9以上
 - **Git**: 任意のバージョン
 - **エディタ**: VS Code推奨
 
 ### Raspberry Pi運用環境
+
 - **OS**: Raspberry Pi OS (Debian系)
 - **Docker**: 20.10以上
 - **Docker Compose**: v2.0以上
 - **Git**: 任意のバージョン
 
 ### 必要なアカウント
+
 - Discord Developer Account (ボットトークン取得用)
 - Cloudflare Account (Tunnel設定用)
 
@@ -256,6 +259,7 @@ sudo systemctl enable docker
 ### PC側での開発・更新
 
 1. **コードを編集**
+
    ```bash
    npm run dev  # ホットリロードで開発
    ```
@@ -274,12 +278,14 @@ sudo systemctl enable docker
 ### Raspberry Pi側での更新
 
 1. **最新コードを取得**
+
    ```bash
    cd yagapon-notifier
    git pull origin main
    ```
 
 2. **コンテナを再ビルド・再起動**
+
    ```bash
    docker compose up -d --build
    ```
@@ -344,16 +350,19 @@ docker compose down -v
 **症状**: コンテナが`Exited`状態になる
 
 **確認手順**:
+
 ```bash
 docker compose logs bot
 ```
 
 **よくある原因**:
+
 - `.env`の環境変数が不足または間違っている
 - `DISCORD_TOKEN`が無効
 - TypeScriptのビルドエラー
 
 **解決方法**:
+
 ```bash
 # .envを再確認
 cat .env
@@ -372,15 +381,18 @@ docker compose up -d --build
 **症状**: `cloudflared`コンテナがエラーで停止
 
 **確認手順**:
+
 ```bash
 docker compose logs cloudflared
 ```
 
 **よくある原因**:
+
 - `CLOUDFLARE_TUNNEL_TOKEN`が間違っている
 - トンネル設定で`bot:3000`のマッピングが不正
 
 **解決方法**:
+
 1. Cloudflare Dashboardでトンネル設定を確認
 2. `.env`のトークンを再確認
 3. トンネルを削除して再作成
@@ -392,6 +404,7 @@ docker compose logs cloudflared
 **症状**: `/notify`エンドポイントにリクエストしてもDiscordに通知されない
 
 **確認手順**:
+
 ```bash
 # ボットのログを確認
 docker compose logs -f bot
@@ -407,11 +420,13 @@ curl -X POST https://あなたのドメイン/notify \
 ```
 
 **よくある原因**:
+
 - `Authorization`ヘッダーが間違っている
 - ボットがチャンネルにアクセスする権限がない
 - ボットがまだ準備完了していない
 
 **解決方法**:
+
 1. Discordでボットの権限を確認
 2. `.env`の`BOT_NOTIFY_SECRET`を確認
 3. ボットが起動完了するまで待つ（`/health`で確認）
@@ -423,6 +438,7 @@ curl -X POST https://あなたのドメイン/notify \
 **症状**: `port is already allocated`
 
 **解決方法**:
+
 ```bash
 # 使用中のポートを確認
 sudo lsof -i :3000
@@ -445,12 +461,6 @@ ports:
 
 ---
 
-## 📄 ライセンス
-
-ISC
-
----
-
-## 👤 作者
+## 作者
 
 Ryota-Shiohara
