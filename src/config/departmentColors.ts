@@ -1,3 +1,9 @@
+/**
+ * src/config/departmentColors.ts
+ *
+ * 部署ごとのカラー設定
+ */
+
 import { ColorResolvable } from 'discord.js';
 
 const departmentColors: { [key: string]: ColorResolvable } = {
@@ -14,6 +20,7 @@ const departmentColors: { [key: string]: ColorResolvable } = {
   IT局: '#008736',
 };
 
-export function getDepartmentColor(department: string): ColorResolvable {
+export function getDepartmentColor(department?: string): ColorResolvable {
+  if (!department) return '#808080';
   return departmentColors[department] || '#808080'; // デフォルトはグレー
 }
