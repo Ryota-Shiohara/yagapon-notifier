@@ -15,14 +15,18 @@ export class NotificationService {
   async sendNotification(payload: NotificationPayload): Promise<void> {
     const { title, description, remindTime, location, department } = payload;
 
+    // 局名に応じたチャンネルIDとロールIDを取得（見つからない場合はデフォルト）
+    const channelId =
+      (department && config.DEPARTMENT_CHANNELS[department]) ||
+      config.NOTIFICATION_CHANNEL_ID;
+    const roleId = department && config.DEPARTMENT_ROLES[department];
+
     // チャンネルを取得
-    const channel = await this.client.channels.fetch(
-      config.NOTIFICATION_CHANNEL_ID
-    );
+    const channel = await this.client.channels.fetch(channelId);
 
     if (!channel || !channel.isTextBased()) {
       throw new Error(
-        `チャンネルID ${config.NOTIFICATION_CHANNEL_ID} が見つからないか、テキストチャンネルではありません。`
+        `チャンネルID ${channelId} が見つからないか、テキストチャンネルではありません。`
       );
     }
 
@@ -49,12 +53,12 @@ ${description || ''}
 
     // チャンネルにEmbedを送信
     await (channel as TextChannel).send({
-      content: `<@&${'1438943768702357646'}>`,
+      content: roleId ? `<@&${roleId}>` : undefined,
       embeds: [embed],
     });
 
     console.log(
-      `通知をチャンネル ${config.NOTIFICATION_CHANNEL_ID} に送信しました。`
+      `通知を${department ? `${department}の` : ''}チャンネル ${channelId} に送信しました。`
     );
   }
 }
