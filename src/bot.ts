@@ -4,6 +4,7 @@
 
 import { Client, Events, GatewayIntentBits } from 'discord.js';
 
+import { commands } from './commands';
 import { config } from './config/env';
 
 export class DiscordBot {
@@ -31,7 +32,38 @@ export class DiscordBot {
       this.isReady = true;
     });
 
-    // メッセージへの応答 (Ping-Pong)
+    // スラッシュコマンドのハンドリング
+    this.client.on(Events.InteractionCreate, async (interaction) => {
+      if (!interaction.isChatInputCommand()) return;
+
+      const command = commands.get(interaction.commandName);
+
+      if (!command) {
+        console.error(`コマンド ${interaction.commandName} が見つかりません。`);
+        return;
+      }
+
+      try {
+        await command.execute(interaction);
+        console.log(
+          `✅ コマンド /${interaction.commandName} を ${interaction.user.tag} が実行しました。`
+        );
+      } catch (error) {
+        console.error(`❌ コマンド実行エラー:`, error);
+        const errorMessage = {
+          content: 'コマンドの実行中にエラーが発生しました。',
+          ephemeral: true,
+        };
+
+        if (interaction.replied || interaction.deferred) {
+          await interaction.followUp(errorMessage);
+        } else {
+          await interaction.reply(errorMessage);
+        }
+      }
+    });
+
+    // メッセージへの応答 (Ping-Pong) - 下位互換性のため残す
     this.client.on(Events.MessageCreate, async (message) => {
       // Bot自身の発言は無視する
       if (message.author.bot) return;
