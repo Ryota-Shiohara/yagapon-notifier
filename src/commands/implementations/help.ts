@@ -17,8 +17,8 @@ export const help: Command = {
   async execute(interaction: ChatInputCommandInteraction) {
     const embed = new EmbedBuilder()
       .setColor(0x5865f2)
-      .setTitle('🤖 やがぽん - コマンド一覧')
-      .setDescription('やがぽんボットの使い方だぽん！')
+      .setTitle('<:face:1439173874368381011> おしらせやがぽん - コマンド一覧')
+      .setDescription('おしらせやがぽんの使い方だぽん！')
       .addFields(
         {
           name: '📍 /ping',

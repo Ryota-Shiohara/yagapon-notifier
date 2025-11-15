@@ -22,12 +22,6 @@ export const notify: Command = {
         .setRequired(true)
     )
     .addStringOption((option) =>
-      option.setName('description').setDescription('イベントの説明')
-    )
-    .addStringOption((option) =>
-      option.setName('location').setDescription('場所')
-    )
-    .addStringOption((option) =>
       option
         .setName('department')
         .setDescription('局名')
@@ -45,6 +39,12 @@ export const notify: Command = {
           { name: 'IT局', value: 'IT局' }
         )
         .setRequired(true)
+    )
+    .addStringOption((option) =>
+      option.setName('description').setDescription('イベントの説明')
+    )
+    .addStringOption((option) =>
+      option.setName('location').setDescription('場所')
     )
     .addStringOption((option) =>
       option.setName('section').setDescription('部署名')
