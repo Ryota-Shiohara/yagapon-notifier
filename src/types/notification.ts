@@ -6,7 +6,9 @@ export interface NotificationPayload {
   id?: string;
   title: string;
   description?: string;
-  remindTime?: string;
+  startTime?: string;
+  endTime?: string;
   location?: string;
   department?: string;
+  section?: string;
 }
