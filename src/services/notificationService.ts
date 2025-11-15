@@ -42,7 +42,7 @@ export class NotificationService {
     console.log('startTime:', startTime, 'type:', typeof startTime);
     console.log('endTime:', endTime, 'type:', typeof endTime);
 
-    // 時間をHH:MM形式にフォーマット
+    // 時間をHH:MM形式にフォーマット（日本時間）
     const formatTime = (
       time: Date | string | undefined | any
     ): string | undefined => {
@@ -61,12 +61,17 @@ export class NotificationService {
         return undefined;
       }
 
-      const hours = date.getHours().toString().padStart(2, '0');
-      const minutes = date.getMinutes().toString().padStart(2, '0');
-      return `${hours}:${minutes}`;
+      // 日本時間（JST）でフォーマット
+      const jstString = date.toLocaleString('ja-JP', {
+        timeZone: 'Asia/Tokyo',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+      return jstString;
     };
 
-    // 日付をMM/DD（曜日）形式にフォーマット
+    // 日付をMM/DD（曜日）形式にフォーマット（日本時間）
     const formatDate = (
       time: Date | string | undefined | any
     ): string | undefined => {
@@ -85,10 +90,14 @@ export class NotificationService {
         return undefined;
       }
 
-      const month = (date.getMonth() + 1).toString();
-      const day = date.getDate().toString();
+      // 日本時間（JST）でフォーマット
+      const jstDate = new Date(
+        date.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
+      );
+      const month = jstDate.getMonth() + 1;
+      const day = jstDate.getDate();
       const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
-      const weekday = weekdays[date.getDay()];
+      const weekday = weekdays[jstDate.getDay()];
       return `${month}/${day}（${weekday}）`;
     };
 
