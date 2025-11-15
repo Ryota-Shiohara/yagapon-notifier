@@ -1,8 +1,5 @@
 /**
- * src/app.ts
- *
- * Expressアプリケーションの設定
- * 仕様書 6.1 に基づく
+ * Expressアプリケーションのセットアップ
  */
 
 import express, { Express } from 'express';

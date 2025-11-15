@@ -1,7 +1,5 @@
 /**
- * src/config/departmentColors.ts
- *
- * 部署ごとのカラー設定
+ * 部署ごとのDiscord Embedカラー設定
  */
 
 import { ColorResolvable } from 'discord.js';

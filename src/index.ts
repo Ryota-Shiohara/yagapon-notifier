@@ -1,8 +1,6 @@
 /**
- * src/index.ts
- *
- * エントリーポイント
- * 仕様設計書 (v2) に基づくDiscordボット兼Expressサーバー
+ * アプリケーションのエントリーポイント
+ * Discordボット + Expressサーバーを起動
  */
 
 import { createApp } from './app';

@@ -1,8 +1,5 @@
 /**
- * src/routes/health.ts
- *
- * ヘルスチェックエンドポイント
- * Docker Composeのヘルスチェック用
+ * ヘルスチェックエンドポイント (Docker用)
  */
 
 import { Request, Response, Router } from 'express';

@@ -1,7 +1,5 @@
 /**
- * src/bot.ts
- *
- * Discordクライアントの設定とイベント処理
+ * Discordボットの初期化とイベント処理
  */
 
 import { Client, Events, GatewayIntentBits } from 'discord.js';

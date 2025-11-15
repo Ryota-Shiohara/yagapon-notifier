@@ -1,8 +1,5 @@
 /**
- * src/middlewares/auth.ts
- *
- * 認証ミドルウェア
- * 仕様書 6.2 と 7.2 に基づく
+ * Bearer Token認証ミドルウェア
  */
 
 import { NextFunction, Request, Response } from 'express';

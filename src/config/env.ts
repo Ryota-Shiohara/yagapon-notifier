@@ -1,8 +1,5 @@
 /**
- * src/config/env.ts
- *
  * 環境変数の読み込みと検証
- * 仕様書 9. フェーズ1-2 と 7.2 に基づく
  */
 
 import 'dotenv/config';

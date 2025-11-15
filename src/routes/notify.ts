@@ -1,8 +1,6 @@
 /**
- * src/routes/notify.ts
- *
  * 通知エンドポイント
- * 仕様書 6.1, 6.2, 6.3 に基づく
+ * POST /notify で外部サービスからの通知を受け付ける
  */
 
 import { Request, Response, Router } from 'express';

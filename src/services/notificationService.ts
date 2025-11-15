@@ -1,8 +1,6 @@
 /**
- * src/services/notificationService.ts
- *
- * Discord通知処理のビジネスロジック
- * 仕様書 6.3 に基づく
+ * Discord通知サービス
+ * 通知データを受け取り、指定チャンネルにEmbedメッセージを送信
  */
 
 import { Client, EmbedBuilder, TextChannel } from 'discord.js';
