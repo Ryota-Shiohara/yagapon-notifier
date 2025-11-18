@@ -16,6 +16,7 @@ services:
       - NOTIFICATION_CHANNEL_ID=${NOTIFICATION_CHANNEL_ID}
       - DEPARTMENT_CHANNELS=${DEPARTMENT_CHANNELS}
       - DEPARTMENT_ROLES=${DEPARTMENT_ROLES}
+      - MONTHLY_URL=${MONTHLY_URL}
     # ポートマッピング（開発・デバッグ用、Cloudflare Tunnel経由なら不要）
     ports:
       - '3000:3000'
