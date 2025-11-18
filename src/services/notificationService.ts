@@ -35,7 +35,7 @@ export class NotificationService {
    * @param payload 通知ペイロード（type と data を含む）
    */
   async sendNotificationByType(payload: NotificationPayload): Promise<void> {
-    const { type, data } = payload;
+    const { type, data, channelId: specifiedChannelId } = payload;
 
     // 適切な戦略を取得
     const strategy = this.messageStrategies[type];
@@ -43,7 +43,7 @@ export class NotificationService {
       throw new Error(`Unknown notification type: ${type}`);
     }
 
-    // 部署名を取得（型ガードで分岐）
+    // 部署名を取得
     let department: string | undefined;
     if (type === 'daily') {
       department = (data as Schedule).department;
@@ -51,9 +51,11 @@ export class NotificationService {
       department = (data as MonthlyData).department;
     }
 
-    // 通知先を解決
-    const { channelId, roleId } =
-      this.channelResolver.resolveChannel(department);
+    // チャンネルIDと通知先を解決
+    const { channelId, roleId } = this.channelResolver.resolveChannel(
+      specifiedChannelId,
+      department
+    );
 
     // チャンネルを取得
     const channel = await this.client.channels.fetch(channelId);

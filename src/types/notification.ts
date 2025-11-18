@@ -26,5 +26,5 @@ export interface MonthlyData {
  * 通知ペイロードの型定義（Union型）
  */
 export type NotificationPayload =
-  | { type: 'daily'; data: Schedule }
-  | { type: 'monthly'; data: MonthlyData };
+  | { type: 'daily'; data: Schedule; channelId?: string }
+  | { type: 'monthly'; data: MonthlyData; channelId?: string };

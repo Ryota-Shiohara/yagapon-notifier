@@ -11,6 +11,7 @@ interface EnvConfig {
   DEPARTMENT_CHANNELS: Record<string, string>;
   DEPARTMENT_ROLES: Record<string, string>;
   PORT: number;
+  MONTHLY_URL?: string;
 }
 
 function validateEnv(): EnvConfig {
@@ -21,6 +22,7 @@ function validateEnv(): EnvConfig {
     DEPARTMENT_CHANNELS,
     DEPARTMENT_ROLES,
     PORT,
+    MONTHLY_URL,
   } = process.env;
 
   if (!DISCORD_TOKEN || !BOT_NOTIFY_SECRET || !NOTIFICATION_CHANNEL_ID) {
@@ -64,6 +66,7 @@ function validateEnv(): EnvConfig {
     DEPARTMENT_CHANNELS: departmentChannels,
     DEPARTMENT_ROLES: departmentRoles,
     PORT: parseInt(PORT || '3000', 10),
+    MONTHLY_URL,
   };
 }
 
