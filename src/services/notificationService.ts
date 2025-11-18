@@ -3,31 +3,57 @@
  * 通知データを受け取り、指定チャンネルにEmbedメッセージを送信
  */
 
-import { Client, EmbedBuilder, TextChannel } from 'discord.js';
+import { Client, TextChannel } from 'discord.js';
 
-import { getDepartmentColor } from '../config/departmentColors';
-import { config } from '../config/env';
-import { NotificationPayload } from '../types/notification';
+import {
+  MonthlyData,
+  NotificationPayload,
+  Schedule,
+} from '../types/notification';
+import { ChannelResolver } from './channelResolver';
+import {
+  DailyMessageStrategy,
+  MessageStrategy,
+  MonthlyMessageStrategy,
+} from './messageStrategies';
 
 export class NotificationService {
-  constructor(private client: Client) {}
+  private channelResolver: ChannelResolver;
+  private messageStrategies: Record<string, MessageStrategy>;
 
-  async sendNotification(payload: NotificationPayload): Promise<void> {
-    const {
-      title,
-      description,
-      startTime,
-      endTime,
-      location,
-      department,
-      section,
-    } = payload;
+  constructor(private client: Client) {
+    this.channelResolver = new ChannelResolver();
+    // メッセージ戦略のマップを初期化
+    this.messageStrategies = {
+      daily: new DailyMessageStrategy(),
+      monthly: new MonthlyMessageStrategy(),
+    };
+  }
 
-    // 局名に応じたチャンネルIDとロールIDを取得（見つからない場合はデフォルト）
-    const channelId =
-      (department && config.DEPARTMENT_CHANNELS[department]) ||
-      config.NOTIFICATION_CHANNEL_ID;
-    const roleId = department && config.DEPARTMENT_ROLES[department];
+  /**
+   * 通知ペイロードに基づいて通知を送信
+   * @param payload 通知ペイロード（type と data を含む）
+   */
+  async sendNotificationByType(payload: NotificationPayload): Promise<void> {
+    const { type, data } = payload;
+
+    // 適切な戦略を取得
+    const strategy = this.messageStrategies[type];
+    if (!strategy) {
+      throw new Error(`Unknown notification type: ${type}`);
+    }
+
+    // 部署名を取得（型ガードで分岐）
+    let department: string | undefined;
+    if (type === 'daily') {
+      department = (data as Schedule).department;
+    } else if (type === 'monthly') {
+      department = (data as MonthlyData).department;
+    }
+
+    // 通知先を解決
+    const { channelId, roleId } =
+      this.channelResolver.resolveChannel(department);
 
     // チャンネルを取得
     const channel = await this.client.channels.fetch(channelId);
@@ -38,140 +64,22 @@ export class NotificationService {
       );
     }
 
-    // デバッグ: 受け取った時間データを確認
-    console.log('startTime:', startTime, 'type:', typeof startTime);
-    console.log('endTime:', endTime, 'type:', typeof endTime);
-
-    // 時間をHH:MM形式にフォーマット（日本時間）
-    const formatTime = (
-      time: Date | string | undefined | any
-    ): string | undefined => {
-      if (!time) return undefined;
-
-      // Firebase Timestampの場合
-      let date: Date;
-      if (time.toDate && typeof time.toDate === 'function') {
-        date = time.toDate();
-      } else if (time instanceof Date) {
-        date = time;
-      } else if (typeof time === 'string') {
-        date = new Date(time);
-      } else {
-        console.warn('Unknown time format:', time);
-        return undefined;
-      }
-
-      // 日本時間（JST）でフォーマット
-      const jstString = date.toLocaleString('ja-JP', {
-        timeZone: 'Asia/Tokyo',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      });
-      return jstString;
-    };
-
-    // 日付をMM/DD（曜日）形式にフォーマット（日本時間）
-    const formatDate = (
-      time: Date | string | undefined | any
-    ): string | undefined => {
-      if (!time) return undefined;
-
-      // Firebase Timestampの場合
-      let date: Date;
-      if (time.toDate && typeof time.toDate === 'function') {
-        date = time.toDate();
-      } else if (time instanceof Date) {
-        date = time;
-      } else if (typeof time === 'string') {
-        date = new Date(time);
-      } else {
-        console.warn('Unknown date format:', time);
-        return undefined;
-      }
-
-      // 日本時間（JST）でフォーマット
-      const jstDate = new Date(
-        date.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
-      );
-      const month = jstDate.getMonth() + 1;
-      const day = jstDate.getDate();
-      const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
-      const weekday = weekdays[jstDate.getDay()];
-      return `${month}/${day}（${weekday}）`;
-    };
-
-    const formattedStartTime = formatTime(startTime);
-    const formattedEndTime = formatTime(endTime);
-    const formattedDate = formatDate(startTime || endTime);
-
-    const time =
-      formattedStartTime && formattedEndTime
-        ? `${formattedStartTime}～${formattedEndTime}`
-        : formattedStartTime || formattedEndTime || '未定';
-
-    const dateTime = formattedDate ? `${formattedDate} ${time}` : time;
-
-    // やがぽんの絵文字リスト
-    const yagaponEmojis = [
-      '<:front_sq:1439180903007125514>',
-      '<:front_face:1439180911685013625>',
-    ];
-
-    // やがぽんのメッセージリスト
-    const yagaponMessages = [
-      '楽しみだぽん！！',
-      'みんな集まるぽん！',
-      '忘れないでぽん！',
-      '待ってるぽん！',
-      '準備しておくぽん！',
-      'よろしくぽん！',
-      'ワクワクするぽん！',
-      '元気に参加するぽん！',
-      'ここが頑張り時だぽん！',
-    ];
-
-    // ランダムに絵文字とメッセージを選択
-    const yagaponEmoji =
-      yagaponEmojis[Math.floor(Math.random() * yagaponEmojis.length)];
-    const yagaponMessage =
-      yagaponMessages[Math.floor(Math.random() * yagaponMessages.length)];
-
-    // Discord Embed を作成
-    const embed = new EmbedBuilder().setColor(getDepartmentColor(department));
-
-    const embedDescription = `
-
-${description || ''}
-
-📍  ${location || '未定'}
-🗓️  ${dateTime}
-
-### ${yagaponEmoji}${yagaponMessage}
-    `.trim();
-
-    // descriptionが空文字列でない場合のみ設定
-    if (embedDescription && embedDescription.trim().length > 0) {
-      embed.setDescription(embedDescription);
-    }
-
-    if (department) {
-      embed.setFooter({ text: department + (section ? `（${section}）` : '') });
-    }
-
-    // メッセージのコンテンツを作成
-    const mentionPart = roleId ? `<@&${roleId}>\n` : '';
-    const titlePart = `# 明日は${title}だぽん！<:face:1439173874368381011>`;
-    const messageContent = `${mentionPart}${titlePart}`;
+    // 戦略を使ってメッセージを構築
+    const message = strategy.build(data, roleId);
 
     // チャンネルにEmbedを送信
-    await (channel as TextChannel).send({
-      content: messageContent,
-      embeds: [embed],
-    });
+    await (channel as TextChannel).send(message);
 
     console.log(
-      `通知を${department ? `${department}の` : ''}チャンネル ${channelId} に送信しました。`
+      `${type}通知を${department ? `${department}の` : ''}チャンネル ${channelId} に送信しました。`
     );
+  }
+
+  /**
+   * Daily通知を送信（後方互換性のため残す）
+   * @deprecated sendNotificationByType を使用してください
+   */
+  async sendNotification(payload: Schedule): Promise<void> {
+    await this.sendNotificationByType({ type: 'daily', data: payload });
   }
 }

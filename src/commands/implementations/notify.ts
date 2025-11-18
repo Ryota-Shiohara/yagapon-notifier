@@ -9,7 +9,7 @@ import {
 } from 'discord.js';
 import { NotificationService } from '../../services/notificationService';
 import { Command } from '../../types/command';
-import { NotificationPayload } from '../../types/notification';
+import { Schedule } from '../../types/notification';
 
 export const notify: Command = {
   data: new SlashCommandBuilder()
@@ -61,7 +61,7 @@ export const notify: Command = {
       const department = interaction.options.getString('department', true);
       const section = interaction.options.getString('section') || '';
 
-      const payload: NotificationPayload = {
+      const payload: Schedule = {
         title,
         description,
         location,

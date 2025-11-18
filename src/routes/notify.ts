@@ -33,14 +33,33 @@ export function createNotifyRouter(
         const payload: NotificationPayload = req.body;
 
         // 最小限のバリデーション
-        if (!payload.title) {
+        if (!payload.type || !payload.data) {
           return res
             .status(400)
-            .send({ error: 'Missing required fields: title' });
+            .send({ error: 'Missing required fields: type, data' });
         }
 
-        // 通知を送信
-        await notificationService.sendNotification(payload);
+        // 型に応じた基本的なバリデーション
+        if (payload.type === 'daily' && !payload.data.title) {
+          return res
+            .status(400)
+            .send({ error: 'Missing required fields: data.title' });
+        }
+
+        if (
+          payload.type === 'monthly' &&
+          (!payload.data.department ||
+            !payload.data.month ||
+            !payload.data.schedules)
+        ) {
+          return res.status(400).send({
+            error:
+              'Missing required fields: data.department, data.month, data.schedules',
+          });
+        }
+
+        // 通知を送信（戦略パターンで自動的に適切な処理が選択される）
+        await notificationService.sendNotificationByType(payload);
 
         res.status(200).send({ success: true, message: 'Notification sent' });
       } catch (error) {
