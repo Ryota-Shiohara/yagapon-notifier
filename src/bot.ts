@@ -2,10 +2,11 @@
  * Discordボットの初期化とイベント処理
  */
 
-import { Client, Events, GatewayIntentBits } from 'discord.js';
+import { Client, Events, GatewayIntentBits, Message } from 'discord.js';
 
 import { commands } from './commands';
 import { config } from './config/env';
+import { handleMessage } from './handlers/messageHandler';
 
 export class DiscordBot {
   public client: Client;
@@ -63,13 +64,18 @@ export class DiscordBot {
       }
     });
 
-    // メッセージへの応答 (Ping-Pong) - 下位互換性のため残す
-    this.client.on(Events.MessageCreate, async (message) => {
-      // Bot自身の発言は無視する
-      if (message.author.bot) return;
+    // メッセージへの応答 (トリガー + Ping) - トリガーハンドラを優先して呼ぶ
+    this.client.on(Events.MessageCreate, async (message: Message) => {
+      try {
+        // 先にトリガー処理。発火したら以降の処理は行わない
+        const handled = await handleMessage(message);
+        if (handled) return;
+      } catch (err) {
+        console.error('Error in trigger handler:', err);
+      }
 
-      // "!ping" と打たれたら "Pong!" と返す
-      if (message.content === '!ping') {
+      // 下位互換: "!ping" と打たれたら "Pong!" と返す
+      if (!message.author.bot && message.content === '!ping') {
         await message.reply('Pong!');
       }
     });
