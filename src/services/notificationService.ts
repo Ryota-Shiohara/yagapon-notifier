@@ -9,12 +9,14 @@ import {
   MonthlyData,
   NotificationPayload,
   Schedule,
+  ScheduleNotificationData,
 } from '../types/notification';
 import { ChannelResolver } from './channelResolver';
 import {
   DailyMessageStrategy,
   MessageStrategy,
   MonthlyMessageStrategy,
+  ScheduleMessageStrategy,
 } from './messageStrategies';
 
 export class NotificationService {
@@ -27,6 +29,7 @@ export class NotificationService {
     this.messageStrategies = {
       daily: new DailyMessageStrategy(),
       monthly: new MonthlyMessageStrategy(),
+      schedule: new ScheduleMessageStrategy(),
     };
   }
 
@@ -49,6 +52,9 @@ export class NotificationService {
       department = (data as Schedule).department;
     } else if (type === 'monthly') {
       department = (data as MonthlyData).department;
+    } else if (type === 'schedule') {
+      const scheduleData = data as ScheduleNotificationData;
+      department = scheduleData.department || scheduleData.after?.department;
     }
 
     // チャンネルIDと通知先を解決
