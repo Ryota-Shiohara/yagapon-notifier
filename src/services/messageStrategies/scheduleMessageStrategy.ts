@@ -55,8 +55,10 @@ export class ScheduleMessageStrategy
       updatedBy: data.after?.updatedBy || data.updatedBy,
     };
 
+    const eventDate = this.formatDateOnly(afterData.startAt);
+
     const lines = [
-      `# ${this.getHeading('update', data.title)}<:face:1439173874368381011>`,
+      `# ${eventDate}の${this.getHeading('update', data.title)}<:face:1439173874368381011>`,
       '**変更箇所**',
       ...this.formatChangedDetails(data.changedDetails),
     ];
@@ -65,7 +67,9 @@ export class ScheduleMessageStrategy
 
     return {
       content: `${mentionPart}${lines.join('\n')}`,
-      embeds: [this.buildScheduleEmbed('変更後の予定', afterData, data)],
+      embeds: [
+        this.buildScheduleEmbed(`${afterData.title}(変更後)`, afterData, data),
+      ],
     };
   }
 
