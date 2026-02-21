@@ -27,8 +27,9 @@ export class ScheduleMessageStrategy
     data: ScheduleNotificationData,
     roleId?: string
   ): MessageContent {
+    const eventDate = this.formatMonthDay(data.startAt);
     const messageContent = this.buildHeadingContent(
-      this.getHeading('add', data.title),
+      `${eventDate}に${this.getHeading('add', data.title)}`,
       roleId
     );
 
@@ -79,14 +80,18 @@ export class ScheduleMessageStrategy
   ): MessageContent {
     const effectiveTitle = data.after?.title || data.title;
     const effectiveStartAt = data.after?.startAt || data.startAt;
-    const deleteDate = this.formatDateOnly(effectiveStartAt);
+    const eventDate = this.formatMonthDay(effectiveStartAt);
+    const deletedBy = (data.after?.updatedBy || data.updatedBy)?.trim();
+    const deleteReason = (data.after?.description || data.description)?.trim();
     const mentionPart = roleId ? `<@&${roleId}>\n` : '';
+    const deletedByPart = deletedBy ? `\n削除者：${deletedBy}` : '';
+    const reasonPart = deleteReason ? `\n削除理由：\n${deleteReason}` : '';
 
     return {
       content:
-        `${mentionPart}# ${this.getHeading('delete', effectiveTitle)}<:face:1439173874368381011>\n` +
-        `タイトル：${effectiveTitle}\n` +
-        `日付：${deleteDate}`,
+        `${mentionPart}# ${eventDate}の${this.getHeading('delete', effectiveTitle)}<:face:1439173874368381011>` +
+        deletedByPart +
+        reasonPart,
       embeds: [],
     };
   }
