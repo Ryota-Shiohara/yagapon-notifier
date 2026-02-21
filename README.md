@@ -315,14 +315,14 @@ POST /notify
     "url": "https://example.com/schedules/123", // 任意
     "updatedBy": "山田", // 任意
     "after": {
-      // update/delete で必須
+      // update で必須（delete では任意）
       "title": "定例ミーティング",
       "startAt": "2026-02-20T09:30:00+09:00",
       "endAt": "2026-02-20T10:30:00+09:00",
       "location": "会議室B",
     },
     "changedDetails": [
-      // update/delete で必須: 項目 + 変更前後
+      // update で必須（delete では任意）: 項目 + 変更前後
       {
         "field": "location",
         "item": "場所",
@@ -343,22 +343,22 @@ POST /notify
 
 **`data` (ScheduleNotificationData型) フィールド一覧**
 
-| フィールド       | 型                              | 必須              | 説明                                |
-| ---------------- | ------------------------------- | ----------------- | ----------------------------------- |
-| `action`         | `"add" \| "update" \| "delete"` | ✅                | 予定イベント種別                    |
-| `title`          | `string`                        | ✅                | 予定タイトル                        |
-| `startAt`        | `string`                        | ✅                | 開始時刻（ISO8601 + タイムゾーン）  |
-| `endAt`          | `string`                        | ✅                | 終了時刻（ISO8601 + タイムゾーン）  |
-| `detail`         | `string`                        | -                 | 予定の詳細メモ                      |
-| `department`     | `string`                        | -                 | 局名（チャンネル/ロール解決に使用） |
-| `section`        | `string`                        | -                 | 部署名                              |
-| `location`       | `string`                        | -                 | 開催場所                            |
-| `description`    | `string`                        | -                 | 説明                                |
-| `url`            | `string`                        | -                 | 詳細リンク                          |
-| `updatedBy`      | `string`                        | -                 | 操作者                              |
-| `after`          | `ScheduleSnapshot`              | update/deleteで✅ | 変更後または削除対象の予定情報      |
-| `changedDetails` | `ScheduleChangeDetail[]`        | update/deleteで✅ | 変更項目・変更前・変更後            |
-| `before`         | `ScheduleSnapshot`              | -                 | 変更前情報（任意）                  |
+| フィールド       | 型                              | 必須       | 説明                                |
+| ---------------- | ------------------------------- | ---------- | ----------------------------------- |
+| `action`         | `"add" \| "update" \| "delete"` | ✅         | 予定イベント種別                    |
+| `title`          | `string`                        | ✅         | 予定タイトル                        |
+| `startAt`        | `string`                        | ✅         | 開始時刻（ISO8601 + タイムゾーン）  |
+| `endAt`          | `string`                        | ✅         | 終了時刻（ISO8601 + タイムゾーン）  |
+| `detail`         | `string`                        | -          | 予定の詳細メモ                      |
+| `department`     | `string`                        | -          | 局名（チャンネル/ロール解決に使用） |
+| `section`        | `string`                        | -          | 部署名                              |
+| `location`       | `string`                        | -          | 開催場所                            |
+| `description`    | `string`                        | -          | 説明                                |
+| `url`            | `string`                        | -          | 詳細リンク                          |
+| `updatedBy`      | `string`                        | -          | 操作者                              |
+| `after`          | `ScheduleSnapshot`              | updateで✅ | 変更後または削除対象の予定情報      |
+| `changedDetails` | `ScheduleChangeDetail[]`        | updateで✅ | 変更項目・変更前・変更後            |
+| `before`         | `ScheduleSnapshot`              | -          | 変更前情報（任意）                  |
 
 **`ScheduleChangeDetail` フィールド**
 

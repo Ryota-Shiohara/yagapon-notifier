@@ -115,7 +115,7 @@ export function createNotifyRouter(
             });
           }
 
-          if (action === 'update' || action === 'delete') {
+          if (action === 'update') {
             if (
               !after ||
               !changedDetails ||
@@ -124,7 +124,7 @@ export function createNotifyRouter(
             ) {
               return res.status(400).send({
                 error:
-                  'Missing required fields for update/delete: data.after, data.changedDetails',
+                  'Missing required fields for update: data.after, data.changedDetails',
               });
             }
 
@@ -146,6 +146,25 @@ export function createNotifyRouter(
             }
 
             if (
+              !changedDetails.every(
+                (detail) =>
+                  detail &&
+                  typeof detail.field === 'string' &&
+                  detail.field.length > 0 &&
+                  typeof detail.before === 'string' &&
+                  typeof detail.after === 'string'
+              )
+            ) {
+              return res.status(400).send({
+                error:
+                  'data.changedDetails must be an array of { field, before, after }',
+              });
+            }
+          }
+
+          if (action === 'delete' && changedDetails !== undefined) {
+            if (
+              !Array.isArray(changedDetails) ||
               !changedDetails.every(
                 (detail) =>
                   detail &&

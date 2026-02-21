@@ -34,7 +34,7 @@ export class ScheduleMessageStrategy
 
     return {
       content: messageContent,
-      embeds: [this.buildScheduleEmbed('追加通知', data, data)],
+      embeds: [this.buildScheduleEmbed(`${data.title}(追加)`, data, data)],
     };
   }
 
@@ -55,7 +55,7 @@ export class ScheduleMessageStrategy
       updatedBy: data.after?.updatedBy || data.updatedBy,
     };
 
-    const eventDate = this.formatDateOnly(afterData.startAt);
+    const eventDate = this.formatMonthDay(afterData.startAt);
 
     const lines = [
       `# ${eventDate}の${this.getHeading('update', data.title)}<:face:1439173874368381011>`,
@@ -168,13 +168,45 @@ export class ScheduleMessageStrategy
         return `- ${itemLabel}：${change.before}までを${change.after}までに変更`;
       }
 
+      if (change.field === 'detail' || change.field === 'description') {
+        return this.formatMultilineChange(
+          itemLabel,
+          change.before,
+          change.after
+        );
+      }
+
       return `- ${itemLabel}：${change.before}→${change.after}`;
     });
   }
 
+  private formatMultilineChange(
+    label: string,
+    before: string,
+    after: string
+  ): string {
+    const formattedBefore = this.indentMultiline(before, '  ');
+    const formattedAfter = this.indentMultiline(after, '  ');
+
+    return (
+      `- ${label}：\n` +
+      `  変更前:\n` +
+      `${formattedBefore}\n` +
+      `  変更後:\n` +
+      `${formattedAfter}`
+    );
+  }
+
+  private indentMultiline(value: string, indent: string): string {
+    return value
+      .split(/\r?\n/)
+      .map((line) => `${indent}${line}`)
+      .join('\n');
+  }
+
   private formatDateRange(startAt: string, endAt: string): string {
     const start = this.formatDateTime(startAt);
-    const end = this.formatDateTime(endAt);
+    const end = this.formatTimeOnly(endAt);
     return `${start} ～ ${end}`;
   }
 
@@ -192,6 +224,19 @@ export class ScheduleMessageStrategy
     });
   }
 
+  private formatMonthDay(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return date.toLocaleDateString('ja-JP', {
+      timeZone: 'Asia/Tokyo',
+      month: '2-digit',
+      day: '2-digit',
+    });
+  }
+
   private formatDateTime(value: string): string {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
@@ -202,6 +247,20 @@ export class ScheduleMessageStrategy
       timeZone: 'Asia/Tokyo',
       month: '2-digit',
       day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  }
+
+  private formatTimeOnly(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return date.toLocaleTimeString('ja-JP', {
+      timeZone: 'Asia/Tokyo',
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,
