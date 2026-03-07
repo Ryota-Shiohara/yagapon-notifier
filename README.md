@@ -157,7 +157,7 @@ GET /health
 
 #### `POST /notify` — 通知送信
 
-外部サービス（GAS等）から Discord チャンネルへ通知を送信する。`type` フィールドで日次通知 (`daily`)、月次通知 (`monthly`)、予定追加/変更/削除通知 (`schedule`) を振り分ける戦略パターンを採用。
+外部サービス（GAS等）から Discord チャンネルへ通知を送信する。`type` フィールドで日次通知 (`daily`)、月次通知 (`monthly`)、予定追加/変更/削除通知 (`schedule`)、申請通知 (`application`) を振り分ける戦略パターンを採用。
 
 **認証**: Bearer Token（`Authorization: Bearer <BOT_NOTIFY_SECRET>`）
 
@@ -198,9 +198,10 @@ POST /notify
          │ OK
          ▼
 ┌──────────────────┐    400 Bad Request
-│ type別           │──→ daily:   { "error": "Missing required fields: data.title" }
-│ 詳細バリデーション│    monthly: { "error": "Missing required fields: data.department, ..." }
-│                  │    schedule:{ "error": "Missing required fields: data.action, ..." }
+│ type別           │──→ daily:       { "error": "Missing required fields: data.title" }
+│ 詳細バリデーション│    monthly:     { "error": "Missing required fields: data.department, ..." }
+│                  │    schedule:    { "error": "Missing required fields: data.action, ..." }
+│                  │    application: { "error": "Missing required fields: data.event, ..." }
 └────────┬─────────┘
          │ OK
          ▼
@@ -369,20 +370,76 @@ POST /notify
 | `before`   | `string` | ✅   | 変更前の値                                      |
 | `after`    | `string` | ✅   | 変更後の値                                      |
 
+##### リクエストボディ: `type: "application"`（申請通知）
+
+新規申請の発生や申請内容の変更を通知する。判定は送信元システムで行い、`data.event` でイベント種別を指定する。
+
+**表示仕様（Embedのみ）**
+
+- メンション（ロールが解決できる場合のみ）
+- Embedタイトル: `【新規/編集】{eventName}`
+- Embed本文（固定3行）
+  - `企画名：{eventName}`
+  - `団体名：{organization}`（未設定時は `未設定`）
+  - `申請者：{applicant}`
+- Embedフッター（小さく表示）: `{formName}`（指定時のみ）
+
+```jsonc
+{
+  "type": "application",
+  "data": {
+    "event": "updated", // 必須: created | updated
+    "eventName": "備品購入申請", // 必須: 企画名
+    "applicant": "山田 太郎", // 必須: 申請者
+    "formType": "expense", // 任意: フォーム種別キー（フォーム別チャンネル解決に使用）
+    "formName": "備品購入申請フォーム", // 任意: 表示名（Embed footer）
+    "changedDetails": "金額を30,000円→28,000円に変更", // updated時に推奨
+    "organization": "総務局" // 任意: 表示上の団体名 + フォールバック解決に使用
+  },
+  "channelId": "preset", // 任意
+}
+```
+
+**`data` (ApplicationNotificationData型) フィールド一覧**
+
+| フィールド       | 型                        | 必須        | 説明                                                  |
+| ---------------- | ------------------------- | ----------- | ----------------------------------------------------- |
+| `event`          | `"created" \| "updated"` | ✅          | 申請イベント種別                                      |
+| `eventName`      | `string`                  | ✅          | 企画名                                                |
+| `applicant`      | `string`                  | ✅          | 申請者                                                |
+| `formType`       | `string`                  | -           | フォーム種別キー（`FORM_CHANNELS` / `FORM_ROLES` のキーとして利用） |
+| `formName`       | `string`                  | -           | フォーム表示名（Embed footerに表示）                  |
+| `applicationId`  | `string`                  | -           | 申請ID（将来拡張用。現行表示では未使用）               |
+| `description`    | `string`                  | -           | 申請内容（将来拡張用。現行表示では未使用）             |
+| `changedDetails` | `string`                  | -           | 変更内容（任意、現行表示では未使用）                   |
+| `organization`   | `string`                  | -           | 団体名表示 + フォームマップ未ヒット時のチャンネル解決  |
+| `section`        | `string`                  | -           | 将来拡張用（現行表示では未使用）                       |
+| `url`            | `string`                  | -           | 将来拡張用（現行表示では未使用）                       |
+| `appliedAt`      | `string`                  | -           | 将来拡張用（現行表示では未使用）                       |
+| `updatedBy`      | `string`                  | -           | 将来拡張用（現行表示では未使用）                       |
+
 ##### チャンネル解決ロジック
 
-通知先チャンネルは `channelId` と `department` の組み合わせで決定される。
+通知先チャンネルとメンションは `channelId` / `formType` / `department` の組み合わせで決定される（`formName` は表示専用）。
 
 ```
 channelId の値
   │
   ├─ 具体的なチャンネルID → そのチャンネルに送信（ロールメンションなし）
   │
-  ├─ "preset" ─┐
-  │             ├─→ department から DEPARTMENT_CHANNELS を参照
-  └─ 未指定 ───┘    ├─ 一致あり → 該当チャンネル + DEPARTMENT_ROLES のロールメンション
-                     └─ 一致なし → NOTIFICATION_CHANNEL_ID（デフォルトチャンネル）
+  ├─ "preset" / 未指定 ─┐
+  │                      ├─→ formType から FORM_CHANNELS を参照
+  │                      │    ├─ 一致あり → 該当チャンネル
+  │                      │    ├─ FORM_ROLES[formType] 一致あり → そのロールをメンション
+  │                      │    └─ FORM_ROLES[formType] なし → メンションなし
+  │                      │
+  │                      │    （FORM_CHANNELS不一致時は department/default チャンネルへフォールバック）
+  │                      └─→ department から DEPARTMENT_CHANNELS を参照
+  │                           ├─ 一致あり → 該当チャンネル（formType指定時はFORM_ROLESのみでメンション判定）
+  └───────────────────────────└─ 一致なし → NOTIFICATION_CHANNEL_ID（デフォルトチャンネル）
 ```
+
+※ `formType` 未指定時のみ、department に対して `DEPARTMENT_ROLES` を使ってロールメンションされます。
 
 **対応局名一覧**: `全局` / `役員` / `執行部` / `総務局` / `室内局` / `屋外局` / `装飾局` / `ステージ局` / `広報局` / `渉外局` / `IT局`
 
@@ -674,6 +731,15 @@ BOT_NOTIFY_SECRET=あなたの秘密鍵
 # Discordで右クリック→IDをコピー（開発者モード有効化が必要）
 NOTIFICATION_CHANNEL_ID=通知先チャンネルID
 
+# 申請フォーム種別ごとの通知先（任意、JSON文字列）
+# 例: {"leave":"123456789012345678","expense":"234567890123456789"}
+FORM_CHANNELS={}
+
+# 申請フォーム種別ごとのメンション先ロール（任意、JSON文字列）
+# 例: {"leave":"345678901234567890","expense":"456789012345678901"}
+# formTypeのキーがなければメンションなし
+FORM_ROLES={}
+
 # サーバーポート
 PORT=3000
 
@@ -701,7 +767,7 @@ curl http://localhost:3000/health
 curl -X POST http://localhost:3000/notify \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer あなたの秘密鍵" \
-  -d '{"title":"テスト通知","description":"動作確認"}'
+  -d '{"type":"application","data":{"event":"created","eventName":"テスト申請","applicant":"やがぽん","organization":"総務局","formType":"expense","formName":"経費申請"}}'
 ```
 
 ---
@@ -961,7 +1027,7 @@ curl https://あなたのドメイン/health
 curl -X POST https://あなたのドメイン/notify \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer あなたの秘密鍵" \
-  -d '{"title":"テスト","description":"テスト通知"}'
+  -d '{"type":"application","data":{"event":"created","eventName":"テスト申請","applicant":"やがぽん","organization":"総務局","formType":"expense","formName":"経費申請"}}'
 ```
 
 **よくある原因**:

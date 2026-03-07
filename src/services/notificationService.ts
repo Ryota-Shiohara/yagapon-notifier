@@ -6,6 +6,7 @@
 import { Client, TextChannel } from 'discord.js';
 
 import {
+  ApplicationNotificationData,
   MonthlyData,
   NotificationPayload,
   Schedule,
@@ -13,6 +14,7 @@ import {
 } from '../types/notification';
 import { ChannelResolver } from './channelResolver';
 import {
+  ApplicationMessageStrategy,
   DailyMessageStrategy,
   MessageStrategy,
   MonthlyMessageStrategy,
@@ -30,6 +32,7 @@ export class NotificationService {
       daily: new DailyMessageStrategy(),
       monthly: new MonthlyMessageStrategy(),
       schedule: new ScheduleMessageStrategy(),
+      application: new ApplicationMessageStrategy(),
     };
   }
 
@@ -48,6 +51,7 @@ export class NotificationService {
 
     // 部署名を取得
     let department: string | undefined;
+    let formType: string | undefined;
     if (type === 'daily') {
       department = (data as Schedule).department;
     } else if (type === 'monthly') {
@@ -55,12 +59,17 @@ export class NotificationService {
     } else if (type === 'schedule') {
       const scheduleData = data as ScheduleNotificationData;
       department = scheduleData.department || scheduleData.after?.department;
+    } else if (type === 'application') {
+      const applicationData = data as ApplicationNotificationData;
+      department = applicationData.organization;
+      formType = applicationData.formType;
     }
 
     // チャンネルIDと通知先を解決
     const { channelId, roleId } = this.channelResolver.resolveChannel(
       specifiedChannelId,
-      department
+      department,
+      formType
     );
 
     // チャンネルを取得

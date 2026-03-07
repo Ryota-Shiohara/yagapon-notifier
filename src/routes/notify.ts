@@ -10,6 +10,7 @@ import { NotificationService } from '../services/notificationService';
 import { NotificationPayload } from '../types/notification';
 
 const SCHEDULE_ACTIONS = new Set(['add', 'update', 'delete']);
+const APPLICATION_EVENTS = new Set(['created', 'updated']);
 
 function isIso8601WithTimezone(value: string): boolean {
   if (typeof value !== 'string') return false;
@@ -55,9 +56,10 @@ export function createNotifyRouter(
             .send({ error: 'Missing required fields: type, data' });
         }
 
-        if (!['daily', 'monthly', 'schedule'].includes(payload.type)) {
+        if (!['daily', 'monthly', 'schedule', 'application'].includes(payload.type)) {
           return res.status(400).send({
-            error: 'Invalid type. Supported values: daily, monthly, schedule',
+            error:
+              'Invalid type. Supported values: daily, monthly, schedule, application',
           });
         }
 
@@ -198,6 +200,71 @@ export function createNotifyRouter(
                   'data.before.startAt and data.before.endAt must be ISO 8601 strings with timezone',
               });
             }
+          }
+        }
+
+        if (payload.type === 'application') {
+          const {
+            event,
+            eventName,
+            applicant,
+            changedDetails,
+            formType,
+            formName,
+            applicationId,
+            description,
+            url,
+            organization,
+            section,
+            appliedAt,
+            updatedBy,
+          } = payload.data;
+
+          if (!event || !eventName || !applicant) {
+            return res.status(400).send({
+              error:
+                'Missing required fields: data.event, data.eventName, data.applicant',
+            });
+          }
+
+          if (!APPLICATION_EVENTS.has(event)) {
+            return res.status(400).send({
+              error:
+                'Invalid data.event. Supported values: created, updated',
+            });
+          }
+
+          const optionalStringFields: Array<[string, unknown]> = [
+            ['data.changedDetails', changedDetails],
+            ['data.formType', formType],
+            ['data.formName', formName],
+            ['data.applicationId', applicationId],
+            ['data.description', description],
+            ['data.url', url],
+            ['data.organization', organization],
+            ['data.section', section],
+            ['data.appliedAt', appliedAt],
+            ['data.updatedBy', updatedBy],
+          ];
+
+          const invalidField = optionalStringFields.find(
+            ([, value]) => value !== undefined && typeof value !== 'string'
+          );
+
+          if (invalidField) {
+            return res.status(400).send({
+              error: `${invalidField[0]} must be a string`,
+            });
+          }
+
+          if (
+            appliedAt &&
+            typeof appliedAt === 'string' &&
+            !isIso8601WithTimezone(appliedAt)
+          ) {
+            return res.status(400).send({
+              error: 'data.appliedAt must be an ISO 8601 string with timezone',
+            });
           }
         }
 
