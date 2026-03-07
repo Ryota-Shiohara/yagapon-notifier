@@ -16,6 +16,39 @@ interface EnvConfig {
   MONTHLY_URL?: string;
 }
 
+function parseJsonEnvRecord(
+  name: string,
+  rawValue: string | undefined,
+  parseFailMessage: string
+): Record<string, string> {
+  if (!rawValue) {
+    console.warn(`[env] ${name} が未設定です。空の設定として扱います。`);
+    return {};
+  }
+
+  try {
+    const sanitized = rawValue.replace(/\s+/g, ' ').trim();
+    const parsed = JSON.parse(sanitized);
+
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      console.warn(
+        `[env] ${name} はJSONオブジェクト形式である必要があります。空の設定として扱います。`
+      );
+      return {};
+    }
+
+    const record = parsed as Record<string, string>;
+    const keys = Object.keys(record);
+    console.info(
+      `[env] ${name} の読み込みに成功しました。キー数: ${keys.length}${keys.length > 0 ? ` (${keys.join(', ')})` : ''}`
+    );
+    return record;
+  } catch (error) {
+    console.warn(parseFailMessage, error);
+    return {};
+  }
+}
+
 function validateEnv(): EnvConfig {
   const {
     DISCORD_TOKEN,
@@ -35,61 +68,29 @@ function validateEnv(): EnvConfig {
     );
   }
 
-  // FORM_CHANNELSをパース
-  let formChannels: Record<string, string> = {};
-  if (FORM_CHANNELS) {
-    try {
-      const sanitized = FORM_CHANNELS.replace(/\s+/g, ' ').trim();
-      formChannels = JSON.parse(sanitized);
-    } catch (error) {
-      console.warn(
-        'FORM_CHANNELSのパースに失敗しました。フォーム別チャンネル設定をスキップします。',
-        error
-      );
-    }
-  }
+  const formChannels = parseJsonEnvRecord(
+    'FORM_CHANNELS',
+    FORM_CHANNELS,
+    'FORM_CHANNELSのパースに失敗しました。フォーム別チャンネル設定をスキップします。'
+  );
 
-  // DEPARTMENT_CHANNELSをパース
-  let departmentChannels: Record<string, string> = {};
-  if (DEPARTMENT_CHANNELS) {
-    try {
-      const sanitized = DEPARTMENT_CHANNELS.replace(/\s+/g, ' ').trim();
-      departmentChannels = JSON.parse(sanitized);
-    } catch (error) {
-      console.warn(
-        'DEPARTMENT_CHANNELSのパースに失敗しました。デフォルトチャンネルを使用します。',
-        error
-      );
-    }
-  }
+  const departmentChannels = parseJsonEnvRecord(
+    'DEPARTMENT_CHANNELS',
+    DEPARTMENT_CHANNELS,
+    'DEPARTMENT_CHANNELSのパースに失敗しました。デフォルトチャンネルを使用します。'
+  );
 
-  // FORM_ROLESをパース
-  let formRoles: Record<string, string> = {};
-  if (FORM_ROLES) {
-    try {
-      const sanitized = FORM_ROLES.replace(/\s+/g, ' ').trim();
-      formRoles = JSON.parse(sanitized);
-    } catch (error) {
-      console.warn(
-        'FORM_ROLESのパースに失敗しました。フォーム別ロール設定をスキップします。',
-        error
-      );
-    }
-  }
+  const formRoles = parseJsonEnvRecord(
+    'FORM_ROLES',
+    FORM_ROLES,
+    'FORM_ROLESのパースに失敗しました。フォーム別ロール設定をスキップします。'
+  );
 
-  // DEPARTMENT_ROLESをパース
-  let departmentRoles: Record<string, string> = {};
-  if (DEPARTMENT_ROLES) {
-    try {
-      const sanitized = DEPARTMENT_ROLES.replace(/\s+/g, ' ').trim();
-      departmentRoles = JSON.parse(sanitized);
-    } catch (error) {
-      console.warn(
-        'DEPARTMENT_ROLESのパースに失敗しました。デフォルトロールを使用します。',
-        error
-      );
-    }
-  }
+  const departmentRoles = parseJsonEnvRecord(
+    'DEPARTMENT_ROLES',
+    DEPARTMENT_ROLES,
+    'DEPARTMENT_ROLESのパースに失敗しました。デフォルトロールを使用します。'
+  );
 
   return {
     DISCORD_TOKEN,

@@ -66,7 +66,7 @@ export class NotificationService {
     }
 
     // チャンネルIDと通知先を解決
-    const { channelId, roleId } = this.channelResolver.resolveChannel(
+    const { channelId, roleId, source } = this.channelResolver.resolveChannel(
       specifiedChannelId,
       department,
       formType
@@ -88,7 +88,8 @@ export class NotificationService {
     await (channel as TextChannel).send(message);
 
     console.log(
-      `${type}通知を${department ? `${department}の` : ''}チャンネル ${channelId} に送信しました。`
+      `${type}通知を${department ? `${department}の` : ''}チャンネル ${channelId} に送信しました。` +
+        ` (source=${source}, specifiedChannelId=${specifiedChannelId ?? 'undefined'}, formType=${formType ?? 'undefined'}, department=${department ?? 'undefined'})`
     );
   }
 

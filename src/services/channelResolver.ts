@@ -8,6 +8,7 @@ import { config } from '../config/env';
 export interface ChannelInfo {
   channelId: string;
   roleId?: string;
+  source: 'specified' | 'form' | 'department' | 'default';
 }
 
 export class ChannelResolver {
@@ -17,6 +18,9 @@ export class ChannelResolver {
    * @returns チャンネルIDとロールID
    */
   resolveChannelFromDepartment(department?: string): ChannelInfo {
+    const hasDepartmentChannel =
+      !!department && !!config.DEPARTMENT_CHANNELS[department];
+
     // 局名に応じたチャンネルIDとロールIDを取得（見つからない場合はデフォルト）
     const channelId =
       (department && config.DEPARTMENT_CHANNELS[department]) ||
@@ -26,6 +30,7 @@ export class ChannelResolver {
     return {
       channelId,
       roleId,
+      source: hasDepartmentChannel ? 'department' : 'default',
     };
   }
 
@@ -45,6 +50,7 @@ export class ChannelResolver {
       return {
         channelId: specifiedChannelId,
         roleId: undefined, // 明示的に指定されたチャンネルの場合はロールメンションなし
+        source: 'specified',
       };
     }
 
@@ -55,6 +61,7 @@ export class ChannelResolver {
         return {
           channelId: config.FORM_CHANNELS[formType],
           roleId: formRoleId,
+          source: 'form',
         };
       }
 
@@ -64,6 +71,7 @@ export class ChannelResolver {
       return {
         channelId: fallbackChannel.channelId,
         roleId: formRoleId,
+        source: fallbackChannel.source,
       };
     }
 
