@@ -22,6 +22,24 @@ export interface MonthlyData {
   schedules: Schedule[];
 }
 
+export type ApplicationEvent = 'created' | 'updated';
+
+export interface ApplicationNotificationData {
+  event: ApplicationEvent;
+  eventName: string;
+  applicant: string;
+  applicationId?: string;
+  formType?: string;
+  formName?: string;
+  organization?: string;
+  section?: string;
+  description?: string;
+  changedDetails?: string;
+  url?: string;
+  appliedAt?: string;
+  updatedBy?: string;
+}
+
 export type ScheduleAction = 'add' | 'update' | 'delete';
 
 export interface ScheduleSnapshot {
@@ -68,4 +86,9 @@ export interface ScheduleNotificationData {
 export type NotificationPayload =
   | { type: 'daily'; data: Schedule; channelId?: string }
   | { type: 'monthly'; data: MonthlyData; channelId?: string }
-  | { type: 'schedule'; data: ScheduleNotificationData; channelId?: string };
+  | { type: 'schedule'; data: ScheduleNotificationData; channelId?: string }
+  | {
+      type: 'application';
+      data: ApplicationNotificationData;
+      channelId?: string;
+    };

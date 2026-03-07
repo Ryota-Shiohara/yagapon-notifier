@@ -37,13 +37,33 @@ export class ChannelResolver {
    */
   resolveChannel(
     specifiedChannelId: string | undefined,
-    department?: string
+    department?: string,
+    formType?: string
   ): ChannelInfo {
     // チャンネルIDが明示的に指定されている場合（"preset"以外）
     if (specifiedChannelId && specifiedChannelId !== 'preset') {
       return {
         channelId: specifiedChannelId,
         roleId: undefined, // 明示的に指定されたチャンネルの場合はロールメンションなし
+      };
+    }
+
+    if (formType) {
+      const formRoleId = config.FORM_ROLES[formType];
+
+      if (config.FORM_CHANNELS[formType]) {
+        return {
+          channelId: config.FORM_CHANNELS[formType],
+          roleId: formRoleId,
+        };
+      }
+
+      // formTypeが指定されている場合、ロールはFORM_ROLESのみを参照。
+      // キーがなければメンションなしでフォールバック先チャンネルへ送信する。
+      const fallbackChannel = this.resolveChannelFromDepartment(department);
+      return {
+        channelId: fallbackChannel.channelId,
+        roleId: formRoleId,
       };
     }
 
