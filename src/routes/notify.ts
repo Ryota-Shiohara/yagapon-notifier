@@ -56,7 +56,11 @@ export function createNotifyRouter(
             .send({ error: 'Missing required fields: type, data' });
         }
 
-        if (!['daily', 'monthly', 'schedule', 'application'].includes(payload.type)) {
+        if (
+          !['daily', 'monthly', 'schedule', 'application'].includes(
+            payload.type
+          )
+        ) {
           return res.status(400).send({
             error:
               'Invalid type. Supported values: daily, monthly, schedule, application',
@@ -229,8 +233,7 @@ export function createNotifyRouter(
 
           if (!APPLICATION_EVENTS.has(event)) {
             return res.status(400).send({
-              error:
-                'Invalid data.event. Supported values: created, updated',
+              error: 'Invalid data.event. Supported values: created, updated',
             });
           }
 

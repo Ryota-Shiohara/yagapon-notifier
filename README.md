@@ -394,7 +394,7 @@ POST /notify
     "formType": "expense", // 任意: フォーム種別キー（フォーム別チャンネル解決に使用）
     "formName": "備品購入申請フォーム", // 任意: 表示名（Embed footer）
     "changedDetails": "金額を30,000円→28,000円に変更", // updated時に推奨
-    "organization": "総務局" // 任意: 表示上の団体名 + フォールバック解決に使用
+    "organization": "総務局", // 任意: 表示上の団体名 + フォールバック解決に使用
   },
   "channelId": "preset", // 任意
 }
@@ -402,21 +402,21 @@ POST /notify
 
 **`data` (ApplicationNotificationData型) フィールド一覧**
 
-| フィールド       | 型                        | 必須        | 説明                                                  |
-| ---------------- | ------------------------- | ----------- | ----------------------------------------------------- |
-| `event`          | `"created" \| "updated"` | ✅          | 申請イベント種別                                      |
-| `eventName`      | `string`                  | ✅          | 企画名                                                |
-| `applicant`      | `string`                  | ✅          | 申請者                                                |
-| `formType`       | `string`                  | -           | フォーム種別キー（`FORM_CHANNELS` / `FORM_ROLES` のキーとして利用） |
-| `formName`       | `string`                  | -           | フォーム表示名（Embed footerに表示）                  |
-| `applicationId`  | `string`                  | -           | 申請ID（将来拡張用。現行表示では未使用）               |
-| `description`    | `string`                  | -           | 申請内容（将来拡張用。現行表示では未使用）             |
-| `changedDetails` | `string`                  | -           | 変更内容（任意、現行表示では未使用）                   |
-| `organization`   | `string`                  | -           | 団体名表示 + フォームマップ未ヒット時のチャンネル解決  |
-| `section`        | `string`                  | -           | 将来拡張用（現行表示では未使用）                       |
-| `url`            | `string`                  | -           | 将来拡張用（現行表示では未使用）                       |
-| `appliedAt`      | `string`                  | -           | 将来拡張用（現行表示では未使用）                       |
-| `updatedBy`      | `string`                  | -           | 将来拡張用（現行表示では未使用）                       |
+| フィールド       | 型                       | 必須 | 説明                                                                |
+| ---------------- | ------------------------ | ---- | ------------------------------------------------------------------- |
+| `event`          | `"created" \| "updated"` | ✅   | 申請イベント種別                                                    |
+| `eventName`      | `string`                 | ✅   | 企画名                                                              |
+| `applicant`      | `string`                 | ✅   | 申請者                                                              |
+| `formType`       | `string`                 | -    | フォーム種別キー（`FORM_CHANNELS` / `FORM_ROLES` のキーとして利用） |
+| `formName`       | `string`                 | -    | フォーム表示名（Embed footerに表示）                                |
+| `applicationId`  | `string`                 | -    | 申請ID（将来拡張用。現行表示では未使用）                            |
+| `description`    | `string`                 | -    | 申請内容（将来拡張用。現行表示では未使用）                          |
+| `changedDetails` | `string`                 | -    | 変更内容（任意、現行表示では未使用）                                |
+| `organization`   | `string`                 | -    | 団体名表示 + フォームマップ未ヒット時のチャンネル解決               |
+| `section`        | `string`                 | -    | 将来拡張用（現行表示では未使用）                                    |
+| `url`            | `string`                 | -    | 将来拡張用（現行表示では未使用）                                    |
+| `appliedAt`      | `string`                 | -    | 将来拡張用（現行表示では未使用）                                    |
+| `updatedBy`      | `string`                 | -    | 将来拡張用（現行表示では未使用）                                    |
 
 ##### チャンネル解決ロジック
 
