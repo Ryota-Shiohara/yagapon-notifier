@@ -3,8 +3,22 @@
  */
 
 import { NextFunction, Request, Response } from 'express';
+import { timingSafeEqual } from 'node:crypto';
 
 import { config } from '../config/env';
+
+import { sendClientError } from './httpResponses';
+export function parseBearerToken(header: string): string | undefined {
+  const match = /^Bearer[ \t]+([^ \t]+)[ \t]*$/i.exec(header);
+  return match?.[1];
+}
+
+function tokensEqual(left: string, right: string): boolean {
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+  if (leftBuffer.length !== rightBuffer.length) return false;
+  return timingSafeEqual(leftBuffer, rightBuffer);
+}
 
 export const authMiddleware = (
   req: Request,
@@ -12,18 +26,35 @@ export const authMiddleware = (
   next: NextFunction
 ) => {
   const authHeader = req.headers.authorization;
+  const requestId = res.locals.requestId ?? 'unknown';
 
   if (!authHeader) {
-    console.warn('認証ヘッダーなしで /notify へのアクセスがありました。');
-    return res.status(401).send({ error: 'Authorization header is missing' });
+    console.warn(
+      JSON.stringify({
+        event: 'notify_auth_rejected',
+        requestId,
+        reason: 'missing_authorization_header',
+      })
+    );
+    return sendClientError(
+      res,
+      requestId,
+      401,
+      'Authorization header is missing'
+    );
   }
 
-  // 'Bearer <token>' の形式を想定
-  const token = authHeader.split(' ')[1];
+  const token = parseBearerToken(authHeader);
 
-  if (token !== config.BOT_NOTIFY_SECRET) {
-    console.warn('無効なシークレットで /notify へのアクセスがありました。');
-    return res.status(403).send({ error: 'Invalid secret token' });
+  if (!token || !tokensEqual(token, config.BOT_NOTIFY_SECRET)) {
+    console.warn(
+      JSON.stringify({
+        event: 'notify_auth_rejected',
+        requestId,
+        reason: 'invalid_bearer_token',
+      })
+    );
+    return sendClientError(res, requestId, 403, 'Invalid secret token');
   }
 
   // 認証成功

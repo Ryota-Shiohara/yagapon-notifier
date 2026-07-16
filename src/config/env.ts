@@ -14,6 +14,25 @@ interface EnvConfig {
   DEPARTMENT_ROLES: Record<string, string>;
   PORT: number;
   MONTHLY_URL?: string;
+  IDEMPOTENCY_STORE_PATH: string;
+  IDEMPOTENCY_TTL_MS: number;
+  IDEMPOTENCY_PROCESSING_TTL_MS: number;
+}
+
+function parsePositiveIntEnv(
+  name: string,
+  rawValue: string | undefined,
+  fallback: number
+): number {
+  const parsed = Number.parseInt(rawValue || '', 10);
+  if (Number.isFinite(parsed) && parsed > 0) return parsed;
+
+  if (rawValue !== undefined) {
+    console.warn(
+      `[env] ${name} は正の整数である必要があります。デフォルト値 ${fallback} を使用します。`
+    );
+  }
+  return fallback;
 }
 
 function parseJsonEnvRecord(
@@ -60,6 +79,9 @@ function validateEnv(): EnvConfig {
     DEPARTMENT_ROLES,
     PORT,
     MONTHLY_URL,
+    IDEMPOTENCY_STORE_PATH,
+    IDEMPOTENCY_TTL_MS,
+    IDEMPOTENCY_PROCESSING_TTL_MS,
   } = process.env;
 
   if (!DISCORD_TOKEN || !BOT_NOTIFY_SECRET || !NOTIFICATION_CHANNEL_ID) {
@@ -102,6 +124,17 @@ function validateEnv(): EnvConfig {
     DEPARTMENT_ROLES: departmentRoles,
     PORT: parseInt(PORT || '3000', 10),
     MONTHLY_URL,
+    IDEMPOTENCY_STORE_PATH: IDEMPOTENCY_STORE_PATH || 'data/idempotency.json',
+    IDEMPOTENCY_TTL_MS: parsePositiveIntEnv(
+      'IDEMPOTENCY_TTL_MS',
+      IDEMPOTENCY_TTL_MS,
+      7 * 24 * 60 * 60 * 1000
+    ),
+    IDEMPOTENCY_PROCESSING_TTL_MS: parsePositiveIntEnv(
+      'IDEMPOTENCY_PROCESSING_TTL_MS',
+      IDEMPOTENCY_PROCESSING_TTL_MS,
+      10 * 60 * 1000
+    ),
   };
 }
 

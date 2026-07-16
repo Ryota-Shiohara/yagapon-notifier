@@ -75,12 +75,12 @@ PC開発 → GitHub管理 → Raspberry Pi運用 のワークフローに対応�
 
 HTTP APIでは**Bearer Token認証**を使用します。Discordスラッシュコマンドは**Discord側の権限管理**に委任しています。
 
-| インターフェース   | 認証方式         | 詳細                                                              |
-| ------------------ | ---------------- | ----------------------------------------------------------------- |
-| `GET /health`      | **なし**         | 誰でもアクセス可能                                                |
-| `POST /notify`     | **Bearer Token** | `Authorization: Bearer <BOT_NOTIFY_SECRET>` ヘッダー必須          |
-| スラッシュコマンド | **Discord権限**  | `/notify` のみ管理者権限（`Administrator`）が必要。他は全員利用可 |
-| メッセージトリガー | **なし**         | Bot自身のメッセージは自動で無視される                             |
+| インターフェース   | 認証方式         | 詳細                                                                                                    |
+| ------------------ | ---------------- | ------------------------------------------------------------------------------------------------------- |
+| `GET /health`      | **なし**         | 誰でもアクセス可能                                                                                      |
+| `POST /notify`     | **Bearer Token** | `Authorization: Bearer <BOT_NOTIFY_SECRET>` ヘッダー必須（`Bearer`の大文字小文字、SP/HTABの連続を許可） |
+| スラッシュコマンド | **Discord権限**  | `/notify` のみ管理者権限（`Administrator`）が必要。他は全員利用可                                       |
+| メッセージトリガー | **なし**         | Bot自身のメッセージは自動で無視される                                                                   |
 
 #### Bearer Token認証の仕組み（`POST /notify`）
 
@@ -119,10 +119,10 @@ HTTP APIでは**Bearer Token認証**を使用します。Discordスラッシュ�
 
 #### エラーレスポンス
 
-| ステータス         | 条件                                    | レスポンス                                       |
-| ------------------ | --------------------------------------- | ------------------------------------------------ |
-| `401 Unauthorized` | `Authorization` ヘッダーがない          | `{ "error": "Authorization header is missing" }` |
-| `403 Forbidden`    | トークンが `BOT_NOTIFY_SECRET` と不一致 | `{ "error": "Invalid secret token" }`            |
+| ステータス         | 条件                                    | レスポンス                                                                               |
+| ------------------ | --------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `401 Unauthorized` | `Authorization` ヘッダーがない          | `{ "error": "Authorization header is missing", "retryable": false, "requestId": "..." }` |
+| `403 Forbidden`    | トークンが `BOT_NOTIFY_SECRET` と不一致 | `{ "error": "Invalid secret token", "retryable": false, "requestId": "..." }`            |
 
 ---
 
@@ -445,14 +445,34 @@ channelId の値
 
 ##### レスポンス一覧
 
-| ステータス | 条件               | ボディ                                                |
-| ---------- | ------------------ | ----------------------------------------------------- |
-| `200`      | 送信成功           | `{ "success": true, "message": "Notification sent" }` |
-| `400`      | バリデーション失敗 | `{ "error": "Missing required fields: ..." }`         |
-| `401`      | 認証ヘッダーなし   | `{ "error": "Authorization header is missing" }`      |
-| `403`      | トークン不一致     | `{ "error": "Invalid secret token" }`                 |
-| `503`      | ボット未準備       | `{ "error": "Discord bot is not ready yet" }`         |
-| `500`      | サーバーエラー     | `{ "error": "Internal server error" }`                |
+| ステータス | 条件                       | ボディ例                                                                                     |
+| ---------- | -------------------------- | -------------------------------------------------------------------------------------------- |
+| `200`      | 送信成功                   | `{ "success": true, "message": "Notification sent", "requestId": "..." }`                    |
+| `200`      | 同じ通知の再送（処理済み） | `{ "success": true, "duplicate": true, "requestId": "..." }`                                 |
+| `400`      | バリデーション・不正JSON   | `{ "error": "...", "retryable": false, "requestId": "..." }`                                 |
+| `401`      | 認証ヘッダーなし           | `{ "error": "Authorization header is missing", "retryable": false, "requestId": "..." }`     |
+| `403`      | トークン不一致             | `{ "error": "Invalid secret token", "retryable": false, "requestId": "..." }`                |
+| `413`      | JSONボディが大きすぎる     | `{ "error": "Payload too large", "retryable": false, "requestId": "..." }`                   |
+| `415`      | 未対応のContent-Encoding   | `{ "error": "Unsupported content encoding", "retryable": false, "requestId": "..." }`        |
+| `422`      | Discordの恒久エラー        | `{ "error": "Notification could not be delivered", "retryable": false, "requestId": "..." }` |
+| `503`      | 一時障害・ボット未準備     | `{ "error": "...", "retryable": true, "requestId": "..." }`                                  |
+| `500`      | 予期しないサーバーエラー   | `{ "error": "Internal server error", "retryable": true, "requestId": "..." }`                |
+
+`503`には再送目安を示す`Retry-After`（秒）が付きます。`/notify`のすべてのレスポンスには調査用の`X-Request-Id`ヘッダーが付き、bodyには同じ値の`requestId`と`retryable`が含まれます。
+
+##### 再送と重複防止
+
+`POST /notify`では、論理的に同じ通知の再送に同じ`Idempotency-Key`（最大256文字）を指定します。処理済みのキーを再度受け取った場合、botはDiscordへ再投稿せず、`200`と`duplicate: true`を返します。
+
+キーがある場合、botは次の値からDiscordの`nonce`を決定的に生成し、`enforceNonce: true`を付けて送信します。
+
+```text
+SHA-256("yagamy-notifier:v1:" + Idempotency-Key) の先頭24文字
+```
+
+これにより、Discord側でメッセージ作成が成功した後にHTTP応答だけが失われ、短時間に同じリクエストが再送されたケースの二重投稿を抑止します。`Idempotency-Key`はCloud Functions側で通知ごとに固定し、再送時に変更しないでください。キーを付けない従来のリクエストも受け付けますが、重複防止の対象外です。
+
+重複履歴は単一GCE・単一botコンテナのローカルファイル（Docker内では`/app/data/idempotency.json`）にも保存されます。Discordのnonce判定期間は有限であり、Discord送信成功直後にbotが停止してローカルの完了記録が保存されないケースまで完全にトランザクション保証するものではありません。
 
 ---
 
@@ -745,6 +765,11 @@ PORT=3000
 
 # Cloudflare Tunnel設定後に追加
 CLOUDFLARE_TUNNEL_TOKEN=あとで設定
+
+# 通知の重複防止履歴（通常はデフォルト値のままでよい）
+IDEMPOTENCY_STORE_PATH=data/idempotency.json
+IDEMPOTENCY_TTL_MS=604800000
+IDEMPOTENCY_PROCESSING_TTL_MS=600000
 ```
 
 #### 1.4 開発サーバーの起動
@@ -767,6 +792,7 @@ curl http://localhost:3000/health
 curl -X POST http://localhost:3000/notify \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer あなたの秘密鍵" \
+  -H "Idempotency-Key: test-notification-20260717-001" \
   -d '{"type":"application","data":{"event":"created","eventName":"テスト申請","applicant":"やがぽん","organization":"総務局","formType":"expense","formName":"経費申請"}}'
 ```
 

@@ -26,11 +26,83 @@ export class DiscordBot {
 
   private setupEventHandlers(): void {
     // ボットの準備完了イベント
-    this.client.once(Events.ClientReady, (readyClient) => {
+    this.client.on(Events.ClientReady, (readyClient) => {
       console.log(
         `✅ Discord準備OK！ ${readyClient.user.tag} としてログインしました。`
       );
       this.isReady = true;
+    });
+
+    this.client.on(Events.ShardReady, (shardId) => {
+      this.isReady = true;
+      console.info(
+        JSON.stringify({
+          event: 'discord_shard_ready',
+          shardId,
+        })
+      );
+    });
+
+    this.client.on(Events.ShardResume, (shardId, replayedEvents) => {
+      this.isReady = true;
+      console.info(
+        JSON.stringify({
+          event: 'discord_shard_resumed',
+          shardId,
+          replayedEvents,
+        })
+      );
+    });
+
+    this.client.on(Events.ShardReconnecting, (shardId) => {
+      this.isReady = false;
+      console.warn(
+        JSON.stringify({
+          event: 'discord_shard_reconnecting',
+          shardId,
+        })
+      );
+    });
+
+    this.client.on(Events.ShardDisconnect, (closeEvent, shardId) => {
+      this.isReady = false;
+      console.error(
+        JSON.stringify({
+          event: 'discord_shard_disconnected',
+          shardId,
+          code: closeEvent.code,
+          reason: closeEvent.reason,
+          wasClean: closeEvent.wasClean,
+        })
+      );
+    });
+
+    this.client.on(Events.ShardError, (error, shardId) => {
+      console.error(
+        JSON.stringify({
+          event: 'discord_shard_error',
+          shardId,
+          error: error.message,
+        })
+      );
+    });
+
+    this.client.on(Events.Error, (error) => {
+      console.error(
+        JSON.stringify({
+          event: 'discord_client_error',
+          error: error.message,
+        })
+      );
+    });
+
+    this.client.on(Events.Warn, (warning) => {
+      console.warn(
+        JSON.stringify({
+          event: 'discord_client_warning',
+          warning,
+        })
+      );
     });
 
     // スラッシュコマンドのハンドリング

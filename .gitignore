@@ -17,6 +17,9 @@ dist/
 logs/
 *.log
 
+# 通知の冪等性履歴（GCEのDocker volumeで永続化）
+data/
+
 # OS
 .DS_Store
 Thumbs.db

@@ -19,11 +19,21 @@ services:
       - DEPARTMENT_CHANNELS=${DEPARTMENT_CHANNELS}
       - DEPARTMENT_ROLES=${DEPARTMENT_ROLES}
       - MONTHLY_URL=${MONTHLY_URL}
+      - IDEMPOTENCY_STORE_PATH=/app/data/idempotency.json
+      - IDEMPOTENCY_TTL_MS=${IDEMPOTENCY_TTL_MS:-604800000}
+      - IDEMPOTENCY_PROCESSING_TTL_MS=${IDEMPOTENCY_PROCESSING_TTL_MS:-600000}
     # ポートマッピング（開発・デバッグ用、Cloudflare Tunnel経由なら不要）
     ports:
       - '3000:3000'
+    volumes:
+      - ./data:/app/data
     networks:
       - bot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '5'
     healthcheck:
       test:
         [
@@ -56,6 +66,11 @@ services:
       - seccomp=unconfined
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '5'
 
 networks:
   bot-network:
