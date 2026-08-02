@@ -8,10 +8,33 @@ import { config } from '../config/env';
 export interface ChannelInfo {
   channelId: string;
   roleId?: string;
-  source: 'specified' | 'form' | 'department' | 'default';
+  source: 'specified' | 'receipt' | 'form' | 'department' | 'default';
 }
 
 export class ChannelResolver {
+  /**
+   * 領収書通知の専用チャンネルとロールを解決
+   * @param specifiedChannelId リクエストで明示されたチャンネルID
+   * @returns チャンネルIDとロールID
+   */
+  resolveReceiptChannel(specifiedChannelId?: string): ChannelInfo {
+    if (specifiedChannelId && specifiedChannelId !== 'preset') {
+      return {
+        channelId: specifiedChannelId,
+        roleId: undefined,
+        source: 'specified',
+      };
+    }
+
+    return {
+      channelId:
+        config.RECEIPT_NOTIFICATION_CHANNEL_ID ||
+        config.NOTIFICATION_CHANNEL_ID,
+      roleId: config.RECEIPT_NOTIFICATION_ROLE_ID,
+      source: config.RECEIPT_NOTIFICATION_CHANNEL_ID ? 'receipt' : 'default',
+    };
+  }
+
   /**
    * 部署名に基づいて通知先チャンネルとロールを解決
    * @param department 部署名（オプション）

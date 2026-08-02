@@ -157,7 +157,7 @@ GET /health
 
 #### `POST /notify` — 通知送信
 
-外部サービス（GAS等）から Discord チャンネルへ通知を送信する。`type` フィールドで日次通知 (`daily`)、月次通知 (`monthly`)、予定追加/変更/削除通知 (`schedule`)、申請通知 (`application`) を振り分ける戦略パターンを採用。
+外部サービス（GAS等）から Discord チャンネルへ通知を送信する。`type` フィールドで日次通知 (`daily`)、月次通知 (`monthly`)、予定追加/変更/削除通知 (`schedule`)、申請通知 (`application`)、領収書提出通知 (`receipt`) を振り分ける戦略パターンを採用。
 
 **認証**: Bearer Token（`Authorization: Bearer <BOT_NOTIFY_SECRET>`）
 
@@ -202,6 +202,7 @@ POST /notify
 │ 詳細バリデーション│    monthly:     { "error": "Missing required fields: data.department, ..." }
 │                  │    schedule:    { "error": "Missing required fields: data.action, ..." }
 │                  │    application: { "error": "Missing required fields: data.event, ..." }
+│                  │    receipt:     { "error": "Missing required field: data.event" }
 └────────┬─────────┘
          │ OK
          ▼
@@ -418,6 +419,42 @@ POST /notify
 | `appliedAt`      | `string`                 | -    | 将来拡張用（現行表示では未使用）                                    |
 | `updatedBy`      | `string`                 | -    | 将来拡張用（現行表示では未使用）                                    |
 
+##### リクエストボディ: `type: "receipt"`（領収書提出通知）
+
+領収書提出の新規作成または内容編集を通知する。購入件数・合計金額・購入品名は`wasActuallyPurchased: true`の明細だけを対象とし、領収書ファイルはEmbed内のリンクとして表示する。
+
+```jsonc
+{
+  "type": "receipt",
+  "data": {
+    "event": "created", // 必須: created | edited
+    "organizationId": "organization-1",
+    "submissionId": "submission-1",
+    "organizationName": "矢上祭実行委員会",
+    "eventName": "テスト企画", // 任意
+    "applicant": "山田 太郎",
+    "submittedBy": "firebase-uid", // 任意
+    "submittedAt": "2026-08-02T10:00:00+09:00",
+    "occurredAt": "2026-08-02T10:00:05+09:00",
+    "items": [
+      {
+        "itemName": "養生テープ",
+        "actualPrice": 1280,
+        "wasActuallyPurchased": true,
+      },
+    ],
+    "receiptFiles": [
+      {
+        "fileName": "receipt.pdf",
+        "webViewLink": "https://drive.google.com/file/d/example/view",
+      },
+    ],
+  },
+}
+```
+
+通知先は`RECEIPT_NOTIFICATION_CHANNEL_ID`、メンション先は`RECEIPT_NOTIFICATION_ROLE_ID`で指定する。専用チャンネルが未設定の場合は`NOTIFICATION_CHANNEL_ID`へ送信される。リクエストで具体的な`channelId`を指定した場合は、そのチャンネルを優先しロールメンションは行わない。
+
 ##### チャンネル解決ロジック
 
 通知先チャンネルとメンションは `channelId` / `formType` / `department` の組み合わせで決定される（`formName` は表示専用）。
@@ -440,6 +477,8 @@ channelId の値
 ```
 
 ※ `formType` 未指定時のみ、department に対して `DEPARTMENT_ROLES` を使ってロールメンションされます。
+
+※ `receipt`通知は上記の部署・フォーム設定を使わず、領収書専用の環境変数を参照します。
 
 **対応局名一覧**: `全局` / `役員` / `執行部` / `総務局` / `室内局` / `屋外局` / `装飾局` / `ステージ局` / `広報局` / `渉外局` / `IT局`
 
@@ -750,6 +789,10 @@ BOT_NOTIFY_SECRET=あなたの秘密鍵
 
 # Discordで右クリック→IDをコピー（開発者モード有効化が必要）
 NOTIFICATION_CHANNEL_ID=通知先チャンネルID
+
+# 領収書提出通知の専用チャンネルとメンション先ロール（任意）
+RECEIPT_NOTIFICATION_CHANNEL_ID=領収書通知先チャンネルID
+RECEIPT_NOTIFICATION_ROLE_ID=領収書通知先ロールID
 
 # 申請フォーム種別ごとの通知先（任意、JSON文字列）
 # 例: {"leave":"123456789012345678","expense":"234567890123456789"}

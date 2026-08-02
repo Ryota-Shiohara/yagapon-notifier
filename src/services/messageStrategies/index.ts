@@ -6,4 +6,5 @@ export * from './applicationMessageStrategy';
 export * from './baseMessageStrategy';
 export * from './dailyMessageStrategy';
 export * from './monthlyMessageStrategy';
+export * from './receiptMessageStrategy';
 export * from './scheduleMessageStrategy';

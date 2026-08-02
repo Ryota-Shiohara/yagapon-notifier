@@ -9,6 +9,7 @@ import {
   ApplicationNotificationData,
   MonthlyData,
   NotificationPayload,
+  ReceiptNotificationData,
   Schedule,
   ScheduleNotificationData,
 } from '../types/notification';
@@ -23,6 +24,7 @@ import {
   DailyMessageStrategy,
   MessageStrategy,
   MonthlyMessageStrategy,
+  ReceiptMessageStrategy,
   ScheduleMessageStrategy,
 } from './messageStrategies';
 
@@ -43,6 +45,7 @@ export class NotificationService {
       monthly: new MonthlyMessageStrategy(),
       schedule: new ScheduleMessageStrategy(),
       application: new ApplicationMessageStrategy(),
+      receipt: new ReceiptMessageStrategy(),
     };
   }
 
@@ -87,14 +90,20 @@ export class NotificationService {
       const applicationData = data as ApplicationNotificationData;
       department = applicationData.organization;
       formType = applicationData.formType;
+    } else if (type === 'receipt') {
+      const receiptData = data as ReceiptNotificationData;
+      department = receiptData.organizationName;
     }
 
     // チャンネルIDと通知先を解決
-    const { channelId, roleId, source } = this.channelResolver.resolveChannel(
-      specifiedChannelId,
-      department,
-      formType
-    );
+    const { channelId, roleId, source } =
+      type === 'receipt'
+        ? this.channelResolver.resolveReceiptChannel(specifiedChannelId)
+        : this.channelResolver.resolveChannel(
+            specifiedChannelId,
+            department,
+            formType
+          );
 
     // チャンネルを取得
     let channel: Awaited<ReturnType<Client['channels']['fetch']>>;
