@@ -4,6 +4,8 @@ const { test } = require('node:test');
 process.env.DISCORD_TOKEN = 'test-discord-token';
 process.env.BOT_NOTIFY_SECRET = 'test-notify-secret';
 process.env.NOTIFICATION_CHANNEL_ID = 'default-channel-id';
+process.env.RECEIPT_NOTIFICATION_CHANNEL_ID = 'receipt-channel-id';
+process.env.RECEIPT_NOTIFICATION_ROLE_ID = 'receipt-role-id';
 process.env.FORM_CHANNELS = '{}';
 process.env.FORM_ROLES = '{}';
 process.env.DEPARTMENT_CHANNELS = '{}';
@@ -31,11 +33,28 @@ function createPayload() {
   };
 }
 
-function createFakeClient(sentMessages) {
+function createReceiptPayload() {
+  return {
+    type: 'receipt',
+    data: {
+      event: 'created',
+      organizationId: 'organization-1',
+      submissionId: 'submission-1',
+      organizationName: 'テスト団体',
+      applicant: 'テスト申請者',
+      submittedAt: '2026-08-02T10:00:00+09:00',
+      occurredAt: '2026-08-02T10:00:05+09:00',
+      items: [],
+      receiptFiles: [],
+    },
+  };
+}
+
+function createFakeClient(sentMessages, expectedChannelId = 'test-channel-id') {
   return {
     channels: {
       fetch: async (channelId) => {
-        assert.equal(channelId, 'test-channel-id');
+        assert.equal(channelId, expectedChannelId);
         return {
           isTextBased: () => true,
           send: async (message) => {
@@ -72,4 +91,16 @@ test('Idempotency-Keyがない場合はnonceオプションを付けない', asy
   assert.equal(sentMessages.length, 1);
   assert.equal(Object.hasOwn(sentMessages[0], 'nonce'), false);
   assert.equal(Object.hasOwn(sentMessages[0], 'enforceNonce'), false);
+});
+
+test('領収書通知は専用チャンネルとロールメンションを使用する', async () => {
+  const sentMessages = [];
+  const service = new NotificationService(
+    createFakeClient(sentMessages, 'receipt-channel-id')
+  );
+
+  await service.sendNotificationByType(createReceiptPayload());
+
+  assert.equal(sentMessages.length, 1);
+  assert.equal(sentMessages[0].content, '<@&receipt-role-id>');
 });

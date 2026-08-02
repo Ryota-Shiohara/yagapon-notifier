@@ -86,6 +86,35 @@ function validApplication() {
   };
 }
 
+function validReceipt() {
+  return {
+    type: 'receipt',
+    data: {
+      event: 'created',
+      organizationId: 'organization-1',
+      submissionId: 'submission-1',
+      organizationName: 'test organization',
+      eventName: 'test event',
+      applicant: 'test applicant',
+      submittedAt: '2026-08-02T10:00:00+09:00',
+      occurredAt: '2026-08-02T10:00:05+09:00',
+      items: [
+        {
+          itemName: 'test item',
+          actualPrice: 1200,
+          wasActuallyPurchased: true,
+        },
+      ],
+      receiptFiles: [
+        {
+          fileName: 'receipt.pdf',
+          webViewLink: 'https://example.test/receipt.pdf',
+        },
+      ],
+    },
+  };
+}
+
 test('notifyのバリデーション400はretryable falseとrequestIdを返す', async () => {
   const invalidPayloads = [
     {},
@@ -110,6 +139,20 @@ test('notifyのバリデーション400はretryable falseとrequestIdを返す',
         description: 123,
       },
     },
+    {
+      ...validReceipt(),
+      data: {
+        ...validReceipt().data,
+        event: 'updated',
+      },
+    },
+    {
+      ...validReceipt(),
+      data: {
+        ...validReceipt().data,
+        items: [{ itemName: 'broken item' }],
+      },
+    },
   ];
 
   await withServer(createBot(), async (baseUrl) => {
@@ -119,6 +162,25 @@ test('notifyのバリデーション400はretryable falseとrequestIdを返す',
       assert.equal(body.retryable, false);
       assert.equal(body.requestId, response.headers.get('x-request-id'));
     }
+  });
+});
+
+test('正しい領収書通知を受け付ける', async () => {
+  const sentMessages = [];
+  const channel = {
+    isTextBased: () => true,
+    send: async (message) => {
+      sentMessages.push(message);
+      return { id: 'receipt-message' };
+    },
+  };
+
+  await withServer(createBot({ channel }), async (baseUrl) => {
+    const { response, body } = await postJson(baseUrl, validReceipt());
+
+    assert.equal(response.status, 200);
+    assert.equal(body.success, true);
+    assert.equal(sentMessages.length, 1);
   });
 });
 

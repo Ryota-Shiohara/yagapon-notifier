@@ -8,6 +8,8 @@ interface EnvConfig {
   DISCORD_TOKEN: string;
   BOT_NOTIFY_SECRET: string;
   NOTIFICATION_CHANNEL_ID: string;
+  RECEIPT_NOTIFICATION_CHANNEL_ID?: string;
+  RECEIPT_NOTIFICATION_ROLE_ID?: string;
   FORM_CHANNELS: Record<string, string>;
   FORM_ROLES: Record<string, string>;
   DEPARTMENT_CHANNELS: Record<string, string>;
@@ -73,6 +75,8 @@ function validateEnv(): EnvConfig {
     DISCORD_TOKEN,
     BOT_NOTIFY_SECRET,
     NOTIFICATION_CHANNEL_ID,
+    RECEIPT_NOTIFICATION_CHANNEL_ID,
+    RECEIPT_NOTIFICATION_ROLE_ID,
     FORM_CHANNELS,
     FORM_ROLES,
     DEPARTMENT_CHANNELS,
@@ -118,6 +122,10 @@ function validateEnv(): EnvConfig {
     DISCORD_TOKEN,
     BOT_NOTIFY_SECRET,
     NOTIFICATION_CHANNEL_ID,
+    RECEIPT_NOTIFICATION_CHANNEL_ID:
+      RECEIPT_NOTIFICATION_CHANNEL_ID?.trim() || undefined,
+    RECEIPT_NOTIFICATION_ROLE_ID:
+      RECEIPT_NOTIFICATION_ROLE_ID?.trim() || undefined,
     FORM_CHANNELS: formChannels,
     FORM_ROLES: formRoles,
     DEPARTMENT_CHANNELS: departmentChannels,

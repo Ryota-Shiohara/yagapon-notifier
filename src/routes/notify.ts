@@ -20,6 +20,11 @@ import { NotificationPayload } from '../types/notification';
 
 const SCHEDULE_ACTIONS = new Set(['add', 'update', 'delete']);
 const APPLICATION_EVENTS = new Set(['created', 'updated']);
+const RECEIPT_EVENTS = new Set(['created', 'edited']);
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
 
 function isIso8601WithTimezone(value: string): boolean {
   if (typeof value !== 'string') return false;
@@ -133,7 +138,7 @@ export function createNotifyRouter(
         }
 
         if (
-          !['daily', 'monthly', 'schedule', 'application'].includes(
+          !['daily', 'monthly', 'schedule', 'application', 'receipt'].includes(
             payload.type
           )
         ) {
@@ -141,7 +146,7 @@ export function createNotifyRouter(
             res,
             requestId,
             400,
-            'Invalid type. Supported values: daily, monthly, schedule, application'
+            'Invalid type. Supported values: daily, monthly, schedule, application, receipt'
           );
         }
 
@@ -381,6 +386,118 @@ export function createNotifyRouter(
               requestId,
               400,
               'data.appliedAt must be an ISO 8601 string with timezone'
+            );
+          }
+        }
+
+        if (payload.type === 'receipt') {
+          const {
+            event,
+            organizationId,
+            submissionId,
+            organizationName,
+            eventName,
+            applicant,
+            submittedBy,
+            submittedAt,
+            occurredAt,
+            items,
+            receiptFiles,
+          } = payload.data;
+
+          const requiredStringFields: Array<[string, unknown]> = [
+            ['data.organizationId', organizationId],
+            ['data.submissionId', submissionId],
+            ['data.organizationName', organizationName],
+            ['data.applicant', applicant],
+            ['data.submittedAt', submittedAt],
+            ['data.occurredAt', occurredAt],
+          ];
+          const missingField = requiredStringFields.find(
+            ([, value]) => !isNonEmptyString(value)
+          );
+
+          if (!event || missingField) {
+            return sendClientError(
+              res,
+              requestId,
+              400,
+              `Missing required field: ${missingField?.[0] ?? 'data.event'}`
+            );
+          }
+
+          if (!RECEIPT_EVENTS.has(event)) {
+            return sendClientError(
+              res,
+              requestId,
+              400,
+              'Invalid data.event. Supported values: created, edited'
+            );
+          }
+
+          const optionalStringFields: Array<[string, unknown]> = [
+            ['data.eventName', eventName],
+            ['data.submittedBy', submittedBy],
+          ];
+          const invalidOptionalField = optionalStringFields.find(
+            ([, value]) => value !== undefined && typeof value !== 'string'
+          );
+
+          if (invalidOptionalField) {
+            return sendClientError(
+              res,
+              requestId,
+              400,
+              `${invalidOptionalField[0]} must be a string`
+            );
+          }
+
+          if (
+            !isIso8601WithTimezone(submittedAt) ||
+            !isIso8601WithTimezone(occurredAt)
+          ) {
+            return sendClientError(
+              res,
+              requestId,
+              400,
+              'data.submittedAt and data.occurredAt must be ISO 8601 strings with timezone'
+            );
+          }
+
+          if (
+            !Array.isArray(items) ||
+            !items.every(
+              (item) =>
+                item &&
+                isNonEmptyString(item.itemName) &&
+                typeof item.actualPrice === 'number' &&
+                Number.isFinite(item.actualPrice) &&
+                item.actualPrice >= 0 &&
+                typeof item.wasActuallyPurchased === 'boolean'
+            )
+          ) {
+            return sendClientError(
+              res,
+              requestId,
+              400,
+              'data.items must be an array of valid receipt items'
+            );
+          }
+
+          if (
+            !Array.isArray(receiptFiles) ||
+            !receiptFiles.every(
+              (file) =>
+                file &&
+                isNonEmptyString(file.fileName) &&
+                typeof file.webViewLink === 'string'
+            )
+          ) {
+            return sendClientError(
+              res,
+              requestId,
+              400,
+              'data.receiptFiles must be an array of valid receipt files'
             );
           }
         }

@@ -80,6 +80,33 @@ export interface ScheduleNotificationData {
   changedDetails?: ScheduleChangeDetail[];
 }
 
+export type ReceiptEvent = 'created' | 'edited';
+
+export interface ReceiptNotificationItem {
+  itemName: string;
+  actualPrice: number;
+  wasActuallyPurchased: boolean;
+}
+
+export interface ReceiptNotificationFile {
+  fileName: string;
+  webViewLink: string;
+}
+
+export interface ReceiptNotificationData {
+  event: ReceiptEvent;
+  organizationId: string;
+  submissionId: string;
+  organizationName: string;
+  eventName?: string;
+  applicant: string;
+  submittedBy?: string;
+  submittedAt: string;
+  occurredAt: string;
+  items: ReceiptNotificationItem[];
+  receiptFiles: ReceiptNotificationFile[];
+}
+
 /**
  * 通知ペイロードの型定義（Union型）
  */
@@ -90,5 +117,10 @@ export type NotificationPayload =
   | {
       type: 'application';
       data: ApplicationNotificationData;
+      channelId?: string;
+    }
+  | {
+      type: 'receipt';
+      data: ReceiptNotificationData;
       channelId?: string;
     };
