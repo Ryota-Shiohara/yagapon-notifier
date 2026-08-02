@@ -17,18 +17,25 @@ function createData(event = 'created') {
     occurredAt: '2026-08-02T10:00:05+09:00',
     items: [
       {
+        budgetItemId: 'budget-item-1',
         itemName: '養生テープ',
         actualPrice: 1280,
+        purpose: '設営',
+        companyName: 'テスト商店',
         wasActuallyPurchased: true,
       },
       {
+        budgetItemId: 'budget-item-2',
         itemName: '購入しなかった物品',
         actualPrice: 5000,
+        purpose: '未使用',
+        companyName: '別の商店',
         wasActuallyPurchased: false,
       },
     ],
     receiptFiles: [
       {
+        fileId: 'drive-file-1',
         fileName: 'receipt.pdf',
         webViewLink: 'https://drive.example.test/receipt',
       },
@@ -50,6 +57,8 @@ test('購入済み品だけで件数・合計・購入品を表示する', () =>
   assert.equal(fieldValue(embed, '購入件数'), '1件');
   assert.equal(fieldValue(embed, '合計金額'), '¥1,280');
   assert.match(fieldValue(embed, '購入品'), /養生テープ/);
+  assert.match(fieldValue(embed, '購入品'), /購入目的: 設営/);
+  assert.match(fieldValue(embed, '購入品'), /企業名: テスト商店/);
   assert.doesNotMatch(fieldValue(embed, '購入品'), /購入しなかった物品/);
 });
 

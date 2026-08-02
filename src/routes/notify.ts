@@ -469,10 +469,13 @@ export function createNotifyRouter(
             !items.every(
               (item) =>
                 item &&
+                typeof item.budgetItemId === 'string' &&
                 isNonEmptyString(item.itemName) &&
                 typeof item.actualPrice === 'number' &&
                 Number.isFinite(item.actualPrice) &&
                 item.actualPrice >= 0 &&
+                typeof item.purpose === 'string' &&
+                typeof item.companyName === 'string' &&
                 typeof item.wasActuallyPurchased === 'boolean'
             )
           ) {
@@ -489,6 +492,7 @@ export function createNotifyRouter(
             !receiptFiles.every(
               (file) =>
                 file &&
+                typeof file.fileId === 'string' &&
                 isNonEmptyString(file.fileName) &&
                 typeof file.webViewLink === 'string'
             )
