@@ -438,13 +438,17 @@ POST /notify
     "occurredAt": "2026-08-02T10:00:05+09:00",
     "items": [
       {
+        "budgetItemId": "budget-item-1",
         "itemName": "養生テープ",
         "actualPrice": 1280,
+        "purpose": "会場設営",
+        "companyName": "テスト商店",
         "wasActuallyPurchased": true,
       },
     ],
     "receiptFiles": [
       {
+        "fileId": "drive-file-1",
         "fileName": "receipt.pdf",
         "webViewLink": "https://drive.google.com/file/d/example/view",
       },

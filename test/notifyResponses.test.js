@@ -100,13 +100,17 @@ function validReceipt() {
       occurredAt: '2026-08-02T10:00:05+09:00',
       items: [
         {
+          budgetItemId: 'budget-item-1',
           itemName: 'test item',
           actualPrice: 1200,
+          purpose: 'test purpose',
+          companyName: 'test company',
           wasActuallyPurchased: true,
         },
       ],
       receiptFiles: [
         {
+          fileId: 'drive-file-1',
           fileName: 'receipt.pdf',
           webViewLink: 'https://example.test/receipt.pdf',
         },

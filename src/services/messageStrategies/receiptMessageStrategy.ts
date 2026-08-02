@@ -72,10 +72,19 @@ export class ReceiptMessageStrategy
       (total, item) => total + item.actualPrice,
       0
     );
-    const itemLines = purchasedItems.map(
-      (item) =>
-        `• ${truncateText(item.itemName, 400)} — ${formatPrice(item.actualPrice)}`
-    );
+    const itemLines = purchasedItems.map((item) => {
+      const details = [
+        item.purpose
+          ? `購入目的: ${truncateText(item.purpose, 250)}`
+          : undefined,
+        item.companyName
+          ? `企業名: ${truncateText(item.companyName, 250)}`
+          : undefined,
+      ].filter((detail): detail is string => !!detail);
+      const detailLine = details.length > 0 ? `\n  ${details.join(' / ')}` : '';
+
+      return `• ${truncateText(item.itemName, 400)} — ${formatPrice(item.actualPrice)}${detailLine}`;
+    });
     const receiptLines = data.receiptFiles.map((file, index) => {
       const fileName = truncateText(
         file.fileName || `領収書 ${index + 1}`,

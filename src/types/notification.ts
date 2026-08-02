@@ -83,12 +83,16 @@ export interface ScheduleNotificationData {
 export type ReceiptEvent = 'created' | 'edited';
 
 export interface ReceiptNotificationItem {
+  budgetItemId: string;
   itemName: string;
   actualPrice: number;
+  purpose: string;
+  companyName: string;
   wasActuallyPurchased: boolean;
 }
 
 export interface ReceiptNotificationFile {
+  fileId: string;
   fileName: string;
   webViewLink: string;
 }
