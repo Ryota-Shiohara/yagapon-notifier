@@ -20,6 +20,7 @@ PC開発 → GitHub管理 → Raspberry Pi運用 のワークフローに対応�
 - [開発ワークフロー](#開発ワークフロー)
 - [Docker使用方法](#docker使用方法)
 - [トラブルシューティング](#トラブルシューティング)
+- [Discord履歴のローカル出力](docs/discord-export.md)
 
 ---
 

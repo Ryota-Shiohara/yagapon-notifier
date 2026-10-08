@@ -20,6 +20,9 @@ logs/
 # 通知の冪等性履歴（GCEのDocker volumeで永続化）
 data/
 
+# Discord履歴のローカル出力（本文・個人情報を含む）
+exports/
+
 # OS
 .DS_Store
 Thumbs.db
