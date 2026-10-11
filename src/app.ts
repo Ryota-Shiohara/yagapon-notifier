@@ -12,6 +12,7 @@ import { createHealthRouter } from './routes/health';
 import { createNotifyRouter } from './routes/notify';
 import { IdempotencyStore } from './services/idempotencyStore';
 import { NotificationService } from './services/notificationService';
+import { createMarkdownPreviewRouter } from './routes/markdownPreview';
 
 export function createApp(bot: DiscordBot): Express {
   const app = express();
@@ -31,6 +32,9 @@ export function createApp(bot: DiscordBot): Express {
   );
 
   // ルーターの設定
+  if (config.MARKDOWN_PREVIEW.enabled) {
+    app.use(createMarkdownPreviewRouter(bot.markdownPreviewStore));
+  }
   app.use(createHealthRouter(() => bot.getReadyStatus()));
   app.use(
     createNotifyRouter(

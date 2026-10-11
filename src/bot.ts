@@ -7,9 +7,14 @@ import { Client, Events, GatewayIntentBits, Message } from 'discord.js';
 import { commands } from './commands';
 import { config } from './config/env';
 import { handleMessage } from './handlers/messageHandler';
+import { createMarkdownAttachmentHandler } from './handlers/markdownAttachmentHandler';
+import { MarkdownPreviewStore } from './services/markdownPreviewStore';
 
 export class DiscordBot {
   public client: Client;
+  public readonly markdownPreviewStore = new MarkdownPreviewStore(
+    config.MARKDOWN_PREVIEW
+  );
   private isReady: boolean = false;
 
   constructor() {
@@ -137,7 +142,20 @@ export class DiscordBot {
     });
 
     // メッセージへの応答 (トリガー + Ping) - トリガーハンドラを優先して呼ぶ
+    const handleMarkdown = createMarkdownAttachmentHandler(
+      config.MARKDOWN_PREVIEW,
+      this.markdownPreviewStore
+    );
     this.client.on(Events.MessageCreate, async (message: Message) => {
+      // 本文のみの既存処理から独立させ、ダウンロード待ちで応答を遅らせない。
+      void handleMarkdown(message).catch(() => {
+        console.error(
+          JSON.stringify({
+            event: 'markdown_preview_handler_failed',
+            messageId: message.id,
+          })
+        );
+      });
       try {
         // 先にトリガー処理。発火したら以降の処理は行わない
         const handled = await handleMessage(message);

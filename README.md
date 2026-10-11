@@ -21,6 +21,7 @@ PC開発 → GitHub管理 → Raspberry Pi運用 のワークフローに対応�
 - [Docker使用方法](#docker使用方法)
 - [トラブルシューティング](#トラブルシューティング)
 - [Discord履歴のローカル出力](docs/discord-export.md)
+- [Markdown添付のプレビュー](docs/markdown-preview.md)
 
 ---
 
@@ -30,6 +31,7 @@ PC開発 → GitHub管理 → Raspberry Pi運用 のワークフローに対応�
 
 - **Discord通知**: 外部サービス（Google Apps Script等）からのWebhook通知をDiscordチャンネルに送信
 - **認証機能**: Bearer Token認証でセキュアな通知
+- **Markdownプレビュー（任意）**: 全チャンネルの `.md` 添付へ読み取り専用Webプレビューのリンクを返信（[設定手順](docs/markdown-preview.md)）
 - **Docker対応**: コンテナ化された環境で安定稼働
 - **Cloudflare Tunnel**: ポート開放不要でWebhookを安全に公開
 

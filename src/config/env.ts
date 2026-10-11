@@ -3,8 +3,13 @@
  */
 
 import 'dotenv/config';
+import {
+  MarkdownPreviewConfig,
+  readMarkdownPreviewConfig,
+} from './markdownPreview';
 
 interface EnvConfig {
+  MARKDOWN_PREVIEW: MarkdownPreviewConfig;
   DISCORD_TOKEN: string;
   BOT_NOTIFY_SECRET: string;
   NOTIFICATION_CHANNEL_ID: string;
@@ -119,6 +124,7 @@ function validateEnv(): EnvConfig {
   );
 
   return {
+    MARKDOWN_PREVIEW: readMarkdownPreviewConfig(),
     DISCORD_TOKEN,
     BOT_NOTIFY_SECRET,
     NOTIFICATION_CHANNEL_ID,
