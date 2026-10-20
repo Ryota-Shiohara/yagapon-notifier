@@ -188,6 +188,47 @@ test('正しい領収書通知を受け付ける', async () => {
   });
 });
 
+test('カード明細通知のリンクをDiscordへ送り、不正なファイルは拒否する', async () => {
+  const sentMessages = [];
+  const channel = {
+    isTextBased: () => true,
+    send: async (message) => {
+      sentMessages.push(message);
+      return { id: 'card-message' };
+    },
+  };
+  const payload = validReceipt();
+  payload.data.event = 'cardStatementUpdated';
+  payload.data.cardStatementFiles = [
+    {
+      fileId: 'card-1',
+      fileName: 'card.pdf',
+      webViewLink: 'https://example.test/card',
+    },
+  ];
+  await withServer(createBot({ channel }), async (baseUrl) => {
+    const { response } = await postJson(baseUrl, payload);
+    assert.equal(response.status, 200);
+    const embed = sentMessages[0].embeds[0].toJSON();
+    assert.equal(embed.title, '【更新】クレジットカード明細');
+    assert.match(
+      embed.fields.find((field) => field.name === 'クレジットカード明細').value,
+      /https:\/\/example.test\/card/
+    );
+    for (const invalidFiles of [
+      null,
+      {},
+      [null],
+      [{ fileId: '1', fileName: 'card.pdf', webViewLink: 123 }],
+    ]) {
+      payload.data.cardStatementFiles = invalidFiles;
+      const { response: invalidResponse } = await postJson(baseUrl, payload);
+      assert.equal(invalidResponse.status, 400);
+    }
+    assert.equal(sentMessages.length, 1);
+  });
+});
+
 test('長すぎるIdempotency-Keyは400のクライアントエラーになる', async () => {
   await withServer(createBot(), async (baseUrl) => {
     const { response, body } = await postJson(

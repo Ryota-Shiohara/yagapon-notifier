@@ -424,13 +424,15 @@ POST /notify
 
 ##### リクエストボディ: `type: "receipt"`（領収書提出通知）
 
-領収書提出の新規作成または内容編集を通知する。購入件数・合計金額・購入品名は`wasActuallyPurchased: true`の明細だけを対象とし、領収書ファイルはEmbed内のリンクとして表示する。
+領収書提出の新規作成・内容編集とクレジットカード明細の更新を通知する。購入件数・合計金額・購入品名は`wasActuallyPurchased: true`の明細だけを対象とし、領収書・カード明細ファイルはEmbed内のリンクとして表示する。
+
+Firebaseの`support/27/finance/{organizationId}/receiptSubmissions/{submissionId}`で`cardStatementFiles`が変更されると、`event: "cardStatementUpdated"`で「【更新】クレジットカード明細」を通知する。追加・差し替え・削除が対象で、要否や承認状態だけの変更は通知しない。領収書の内容も同時に変更された場合は`edited`として1件にまとめ、カード明細リンクも表示する。
 
 ```jsonc
 {
   "type": "receipt",
   "data": {
-    "event": "created", // 必須: created | edited
+    "event": "created", // 必須: created | edited | cardStatementUpdated
     "organizationId": "organization-1",
     "submissionId": "submission-1",
     "organizationName": "矢上祭実行委員会",
@@ -454,6 +456,13 @@ POST /notify
         "fileId": "drive-file-1",
         "fileName": "receipt.pdf",
         "webViewLink": "https://drive.google.com/file/d/example/view",
+      },
+    ],
+    "cardStatementFiles": [ // 任意（省略可能）
+      {
+        "fileId": "card-statement-1",
+        "fileName": "カード明細.pdf",
+        "webViewLink": "https://drive.google.com/file/d/card-example/view",
       },
     ],
   },
