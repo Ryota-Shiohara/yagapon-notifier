@@ -98,7 +98,9 @@ export class NotificationService {
     // チャンネルIDと通知先を解決
     const { channelId, roleId, source } =
       type === 'receipt'
-        ? this.channelResolver.resolveReceiptChannel(specifiedChannelId)
+        ? (data as ReceiptNotificationData).event === 'cardStatementUpdated'
+          ? this.channelResolver.resolveCardStatementChannel(specifiedChannelId)
+          : this.channelResolver.resolveReceiptChannel(specifiedChannelId)
         : this.channelResolver.resolveChannel(
             specifiedChannelId,
             department,

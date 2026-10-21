@@ -163,7 +163,7 @@ export class ReceiptMessageStrategy
           name: '領収書',
           value: joinLimitedLines(receiptLines, '領収書ファイルはありません。'),
         },
-        ...(isCardStatementUpdate || cardStatementLines.length > 0
+        ...(isCardStatementUpdate
           ? [
               {
                 name: 'クレジットカード明細',

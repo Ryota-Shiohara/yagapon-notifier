@@ -8,10 +8,33 @@ import { config } from '../config/env';
 export interface ChannelInfo {
   channelId: string;
   roleId?: string;
-  source: 'specified' | 'receipt' | 'form' | 'department' | 'default';
+  source:
+    | 'specified'
+    | 'receipt'
+    | 'cardStatement'
+    | 'form'
+    | 'department'
+    | 'default';
 }
 
 export class ChannelResolver {
+  /** カード明細通知の専用チャンネルとロールを解決 */
+  resolveCardStatementChannel(specifiedChannelId?: string): ChannelInfo {
+    if (specifiedChannelId && specifiedChannelId !== 'preset') {
+      return { channelId: specifiedChannelId, source: 'specified' };
+    }
+
+    return {
+      channelId:
+        config.CARD_STATEMENT_NOTIFICATION_CHANNEL_ID ||
+        config.NOTIFICATION_CHANNEL_ID,
+      roleId: config.CARD_STATEMENT_NOTIFICATION_ROLE_ID,
+      source: config.CARD_STATEMENT_NOTIFICATION_CHANNEL_ID
+        ? 'cardStatement'
+        : 'default',
+    };
+  }
+
   /**
    * 領収書通知の専用チャンネルとロールを解決
    * @param specifiedChannelId リクエストで明示されたチャンネルID

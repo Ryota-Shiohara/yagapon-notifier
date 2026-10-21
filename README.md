@@ -426,7 +426,7 @@ POST /notify
 
 領収書提出の新規作成・内容編集とクレジットカード明細の更新を通知する。購入件数・合計金額・購入品名は`wasActuallyPurchased: true`の明細だけを対象とし、領収書・カード明細ファイルはEmbed内のリンクとして表示する。
 
-Firebaseの`support/27/finance/{organizationId}/receiptSubmissions/{submissionId}`で`cardStatementFiles`が変更されると、`event: "cardStatementUpdated"`で「【更新】クレジットカード明細」を通知する。追加・差し替え・削除が対象で、要否や承認状態だけの変更は通知しない。領収書の内容も同時に変更された場合は`edited`として1件にまとめ、カード明細リンクも表示する。
+Firebaseの`support/27/finance/{organizationId}/receiptSubmissions/{submissionId}`で`cardStatementFiles`が変更されると、`event: "cardStatementUpdated"`で「【更新】クレジットカード明細」を通知する。追加・差し替え・削除が対象で、要否や承認状態だけの変更は通知しない。領収書の内容も同時に変更された場合は`edited`と`cardStatementUpdated`を別々に通知する。新規作成時にカード明細がある場合も領収書と別送する。カード明細リンクはカード明細通知に表示する。
 
 ```jsonc
 {
@@ -470,6 +470,8 @@ Firebaseの`support/27/finance/{organizationId}/receiptSubmissions/{submissionId
 ```
 
 通知先は`RECEIPT_NOTIFICATION_CHANNEL_ID`、メンション先は`RECEIPT_NOTIFICATION_ROLE_ID`で指定する。専用チャンネルが未設定の場合は`NOTIFICATION_CHANNEL_ID`へ送信される。リクエストで具体的な`channelId`を指定した場合は、そのチャンネルを優先しロールメンションは行わない。
+
+`cardStatementUpdated`の通知先は`CARD_STATEMENT_NOTIFICATION_CHANNEL_ID`、メンション先は`CARD_STATEMENT_NOTIFICATION_ROLE_ID`で個別に指定する。チャンネル未設定時は`NOTIFICATION_CHANNEL_ID`へ送信し、ロール未設定時はメンションしない。具体的な`channelId`指定は同様に優先される。領収書と送信先を分けるには、決定したカード明細用チャンネルIDを環境変数に設定してnotifierを再起動する。
 
 ##### チャンネル解決ロジック
 
@@ -809,6 +811,8 @@ NOTIFICATION_CHANNEL_ID=通知先チャンネルID
 # 領収書提出通知の専用チャンネルとメンション先ロール（任意）
 RECEIPT_NOTIFICATION_CHANNEL_ID=領収書通知先チャンネルID
 RECEIPT_NOTIFICATION_ROLE_ID=領収書通知先ロールID
+CARD_STATEMENT_NOTIFICATION_CHANNEL_ID=カード明細通知先チャンネルID
+CARD_STATEMENT_NOTIFICATION_ROLE_ID=カード明細通知先ロールID
 
 # 申請フォーム種別ごとの通知先（任意、JSON文字列）
 # 例: {"leave":"123456789012345678","expense":"234567890123456789"}

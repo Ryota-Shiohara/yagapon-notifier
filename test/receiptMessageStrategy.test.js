@@ -96,7 +96,7 @@ test('カード明細更新は更新日時とファイルへのリンクを表�
   );
 });
 
-test('領収書と同時更新されたカード明細も表示する', () => {
+test('領収書通知には別送するカード明細を表示しない', () => {
   const data = createData('edited');
   data.cardStatementFiles = [
     {
@@ -107,10 +107,7 @@ test('領収書と同時更新されたカード明細も表示する', () => {
   ];
   const embed = new ReceiptMessageStrategy().build(data).embeds[0].toJSON();
   assert.equal(embed.title, '【編集】領収書提出');
-  assert.match(
-    fieldValue(embed, 'クレジットカード明細'),
-    /https:\/\/example.test\/card/
-  );
+  assert.equal(fieldValue(embed, 'クレジットカード明細'), undefined);
 });
 
 test('カード明細を全削除した場合とリンクがない場合も表示できる', () => {
