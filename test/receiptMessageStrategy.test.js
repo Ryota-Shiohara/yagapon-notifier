@@ -74,3 +74,55 @@ test('編集表示と領収書ファイルへのリンクを構築する', () =>
     /\[receipt\.pdf\]\(https:\/\/drive\.example\.test\/receipt\)/
   );
 });
+
+test('カード明細更新は更新日時とファイルへのリンクを表示する', () => {
+  const data = createData('cardStatementUpdated');
+  data.cardStatementFiles = [
+    {
+      fileId: 'statement-1',
+      fileName: 'statement.pdf',
+      webViewLink: 'https://example.test/statement',
+    },
+  ];
+  const embed = new ReceiptMessageStrategy().build(data).embeds[0].toJSON();
+  assert.equal(embed.title, '【更新】クレジットカード明細');
+  assert.equal(
+    fieldValue(embed, '更新日時'),
+    `<t:${Math.floor(new Date(data.occurredAt).getTime() / 1000)}:F>`
+  );
+  assert.equal(
+    fieldValue(embed, 'クレジットカード明細'),
+    '• [statement.pdf](https://example.test/statement)'
+  );
+});
+
+test('領収書通知には別送するカード明細を表示しない', () => {
+  const data = createData('edited');
+  data.cardStatementFiles = [
+    {
+      fileId: '1',
+      fileName: '明細.pdf',
+      webViewLink: 'https://example.test/card',
+    },
+  ];
+  const embed = new ReceiptMessageStrategy().build(data).embeds[0].toJSON();
+  assert.equal(embed.title, '【編集】領収書提出');
+  assert.equal(fieldValue(embed, 'クレジットカード明細'), undefined);
+});
+
+test('カード明細を全削除した場合とリンクがない場合も表示できる', () => {
+  const data = createData('cardStatementUpdated');
+  data.cardStatementFiles = [];
+  const strategy = new ReceiptMessageStrategy();
+  assert.equal(
+    fieldValue(strategy.build(data).embeds[0].toJSON(), 'クレジットカード明細'),
+    'カード明細ファイルはありません。'
+  );
+  data.cardStatementFiles = [
+    { fileId: '1', fileName: '明細.pdf', webViewLink: 'javascript:alert(1)' },
+  ];
+  assert.equal(
+    fieldValue(strategy.build(data).embeds[0].toJSON(), 'クレジットカード明細'),
+    '• 明細.pdf（リンクなし）'
+  );
+});

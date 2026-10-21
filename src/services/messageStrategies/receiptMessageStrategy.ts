@@ -85,26 +85,42 @@ export class ReceiptMessageStrategy
 
       return `• ${truncateText(item.itemName, 400)} — ${formatPrice(item.actualPrice)}${detailLine}`;
     });
-    const receiptLines = data.receiptFiles.map((file, index) => {
-      const fileName = truncateText(
-        file.fileName || `領収書 ${index + 1}`,
-        200
-      );
-      return isSafeLink(file.webViewLink)
-        ? `• [${escapeLinkLabel(fileName)}](${file.webViewLink})`
-        : `• ${fileName}（リンクなし）`;
-    });
+    const fileLines = (
+      files: ReceiptNotificationData['receiptFiles'],
+      label: string
+    ) =>
+      files.map((file, index) => {
+        const fileName = truncateText(
+          file.fileName || `${label} ${index + 1}`,
+          200
+        );
+        return isSafeLink(file.webViewLink)
+          ? `• [${escapeLinkLabel(fileName)}](${file.webViewLink})`
+          : `• ${fileName}（リンクなし）`;
+      });
+    const receiptLines = fileLines(data.receiptFiles, '領収書');
+    const cardStatementLines = fileLines(
+      data.cardStatementFiles ?? [],
+      'カード明細'
+    );
+    const isCardStatementUpdate = data.event === 'cardStatementUpdated';
     const eventLabel = data.event === 'created' ? '新規' : '編集';
 
     const embed = new EmbedBuilder()
       .setColor(
         data.event === 'created' ? this.CREATED_COLOR : this.EDITED_COLOR
       )
-      .setTitle(`【${eventLabel}】領収書提出`)
+      .setTitle(
+        isCardStatementUpdate
+          ? '【更新】クレジットカード明細'
+          : `【${eventLabel}】領収書提出`
+      )
       .setDescription(
-        data.event === 'created'
-          ? '領収書が提出されました。'
-          : '領収書の内容が編集されました。'
+        isCardStatementUpdate
+          ? 'クレジットカード明細が更新されました。'
+          : data.event === 'created'
+            ? '領収書が提出されました。'
+            : '領収書の内容が編集されました。'
       )
       .addFields(
         {
@@ -124,8 +140,10 @@ export class ReceiptMessageStrategy
           value: truncateText(data.applicant, 256),
         },
         {
-          name: '提出日時',
-          value: formatSubmittedAt(data.submittedAt),
+          name: isCardStatementUpdate ? '更新日時' : '提出日時',
+          value: formatSubmittedAt(
+            isCardStatementUpdate ? data.occurredAt : data.submittedAt
+          ),
         },
         {
           name: '購入件数',
@@ -144,7 +162,18 @@ export class ReceiptMessageStrategy
         {
           name: '領収書',
           value: joinLimitedLines(receiptLines, '領収書ファイルはありません。'),
-        }
+        },
+        ...(isCardStatementUpdate
+          ? [
+              {
+                name: 'クレジットカード明細',
+                value: joinLimitedLines(
+                  cardStatementLines,
+                  'カード明細ファイルはありません。'
+                ),
+              },
+            ]
+          : [])
       )
       .setFooter({
         text: `Submission ID: ${truncateText(data.submissionId, 200)}`,

@@ -20,7 +20,7 @@ import { NotificationPayload } from '../types/notification';
 
 const SCHEDULE_ACTIONS = new Set(['add', 'update', 'delete']);
 const APPLICATION_EVENTS = new Set(['created', 'updated']);
-const RECEIPT_EVENTS = new Set(['created', 'edited']);
+const RECEIPT_EVENTS = new Set(['created', 'edited', 'cardStatementUpdated']);
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
@@ -403,6 +403,7 @@ export function createNotifyRouter(
             occurredAt,
             items,
             receiptFiles,
+            cardStatementFiles,
           } = payload.data;
 
           const requiredStringFields: Array<[string, unknown]> = [
@@ -431,7 +432,7 @@ export function createNotifyRouter(
               res,
               requestId,
               400,
-              'Invalid data.event. Supported values: created, edited'
+              'Invalid data.event. Supported values: created, edited, cardStatementUpdated'
             );
           }
 
@@ -502,6 +503,25 @@ export function createNotifyRouter(
               requestId,
               400,
               'data.receiptFiles must be an array of valid receipt files'
+            );
+          }
+
+          if (
+            cardStatementFiles !== undefined &&
+            (!Array.isArray(cardStatementFiles) ||
+              !cardStatementFiles.every(
+                (file) =>
+                  file &&
+                  typeof file.fileId === 'string' &&
+                  isNonEmptyString(file.fileName) &&
+                  typeof file.webViewLink === 'string'
+              ))
+          ) {
+            return sendClientError(
+              res,
+              requestId,
+              400,
+              'data.cardStatementFiles must be an array of valid card statement files'
             );
           }
         }

@@ -80,7 +80,7 @@ export interface ScheduleNotificationData {
   changedDetails?: ScheduleChangeDetail[];
 }
 
-export type ReceiptEvent = 'created' | 'edited';
+export type ReceiptEvent = 'created' | 'edited' | 'cardStatementUpdated';
 
 export interface ReceiptNotificationItem {
   budgetItemId: string;
@@ -109,6 +109,7 @@ export interface ReceiptNotificationData {
   occurredAt: string;
   items: ReceiptNotificationItem[];
   receiptFiles: ReceiptNotificationFile[];
+  cardStatementFiles?: ReceiptNotificationFile[];
 }
 
 /**

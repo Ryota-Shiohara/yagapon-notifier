@@ -6,6 +6,8 @@ process.env.BOT_NOTIFY_SECRET = 'test-notify-secret';
 process.env.NOTIFICATION_CHANNEL_ID = 'default-channel-id';
 process.env.RECEIPT_NOTIFICATION_CHANNEL_ID = 'receipt-channel-id';
 process.env.RECEIPT_NOTIFICATION_ROLE_ID = 'receipt-role-id';
+process.env.CARD_STATEMENT_NOTIFICATION_CHANNEL_ID = 'card-channel-id';
+process.env.CARD_STATEMENT_NOTIFICATION_ROLE_ID = 'card-role-id';
 process.env.FORM_CHANNELS = '{}';
 process.env.FORM_ROLES = '{}';
 process.env.DEPARTMENT_CHANNELS = '{}';
@@ -103,4 +105,52 @@ test('領収書通知は専用チャンネルとロールメンションを使�
 
   assert.equal(sentMessages.length, 1);
   assert.equal(sentMessages[0].content, '<@&receipt-role-id>');
+});
+
+test('カード明細通知は領収書と別の専用チャンネルとロールを使う', async () => {
+  const messages = [];
+  const service = new NotificationService(
+    createFakeClient(messages, 'card-channel-id')
+  );
+  const payload = createReceiptPayload();
+  payload.data.event = 'cardStatementUpdated';
+  await service.sendNotificationByType(payload);
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0].content, '<@&card-role-id>');
+  assert.equal(
+    messages[0].embeds[0].toJSON().title,
+    '【更新】クレジットカード明細'
+  );
+});
+
+test('カード明細でも明示したチャンネル指定を優先しメンションしない', async () => {
+  const messages = [];
+  const service = new NotificationService(createFakeClient(messages));
+  const payload = createReceiptPayload();
+  payload.data.event = 'cardStatementUpdated';
+  payload.channelId = 'test-channel-id';
+  await service.sendNotificationByType(payload);
+  assert.equal(messages[0].content, '');
+});
+
+test('カード明細の専用設定がなければデフォルトへ送り領収書ロールを使わない', () => {
+  const { config } = require('../dist/config/env.js');
+  const { ChannelResolver } = require('../dist/services/channelResolver.js');
+  const originalChannel = config.CARD_STATEMENT_NOTIFICATION_CHANNEL_ID;
+  const originalRole = config.CARD_STATEMENT_NOTIFICATION_ROLE_ID;
+  try {
+    config.CARD_STATEMENT_NOTIFICATION_CHANNEL_ID = undefined;
+    config.CARD_STATEMENT_NOTIFICATION_ROLE_ID = undefined;
+    assert.deepEqual(
+      new ChannelResolver().resolveCardStatementChannel('preset'),
+      {
+        channelId: 'default-channel-id',
+        roleId: undefined,
+        source: 'default',
+      }
+    );
+  } finally {
+    config.CARD_STATEMENT_NOTIFICATION_CHANNEL_ID = originalChannel;
+    config.CARD_STATEMENT_NOTIFICATION_ROLE_ID = originalRole;
+  }
 });
