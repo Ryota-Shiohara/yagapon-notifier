@@ -36,6 +36,9 @@ Thumbs.db
 logs
 *.log
 
+# 実行時データ（Docker Composeのボリュームでマウント）
+/data/
+
 # テスト・カバレッジ
 coverage
 .nyc_output
