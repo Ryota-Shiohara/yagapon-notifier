@@ -752,7 +752,7 @@ Discordチャット上で `/コマンド名` で実行するインタラクテ�
 
 ### PC開発環境
 
-- **Node.js**: v18以上
+- **Node.js**: v22.23.4以上の22系（Dockerと同じ版を推奨）、またはv24.22.1以上の24系
 - **npm**: v9以上
 - **Git**: 任意のバージョン
 - **エディタ**: VS Code推奨
@@ -987,13 +987,18 @@ sudo systemctl enable docker
 2. **コンテナを再ビルド・再起動**
 
    ```bash
-   docker compose up -d --build
+   docker compose build --pull bot
+   docker compose up -d bot
    ```
 
-3. **ログで動作確認**
+3. **ランタイムとログで動作確認**
    ```bash
+   docker compose exec bot node -v
    docker compose logs -f bot
    ```
+
+   Node.jsが`v22.23.4`であることを確認してください（2026年10月のセキュリティ修正版）。
+   この手順ではbotのコンテナを再作成するため、一時的に通知処理が中断します。
 
 ---
 
