@@ -86,6 +86,28 @@ function validApplication() {
   };
 }
 
+function validCommitteeApplication() {
+  return {
+    type: 'application',
+    data: {
+      event: 'created',
+      eventName: '企画長申請',
+      applicant: '毛蟹',
+      applicationId: 'application-1',
+      formType: '委員ロール申請',
+      formName: 'Discord委員プロフィール',
+      organization: 'IT局',
+      description: '企画: ITラボ',
+      committeeRole: '企画長',
+      bureau: 'IT局',
+      grade: '２年生',
+      discordUserId: '123456789',
+      supportUserExists: true,
+      status: 'pending',
+    },
+  };
+}
+
 function validReceipt() {
   return {
     type: 'receipt',
@@ -144,6 +166,20 @@ test('notifyのバリデーション400はretryable falseとrequestIdを返す',
       },
     },
     {
+      ...validCommitteeApplication(),
+      data: {
+        ...validCommitteeApplication().data,
+        committeeRole: '神',
+      },
+    },
+    {
+      ...validCommitteeApplication(),
+      data: {
+        ...validCommitteeApplication().data,
+        supportUserExists: undefined,
+      },
+    },
+    {
       ...validReceipt(),
       data: {
         ...validReceipt().data,
@@ -185,6 +221,35 @@ test('正しい領収書通知を受け付ける', async () => {
     assert.equal(response.status, 200);
     assert.equal(body.success, true);
     assert.equal(sentMessages.length, 1);
+  });
+});
+
+test('Functionsの委員ロール申請契約を受け付けてDiscordへ送る', async () => {
+  const sentMessages = [];
+  const channel = {
+    isTextBased: () => true,
+    send: async (message) => {
+      sentMessages.push(message);
+      return { id: 'committee-role-message' };
+    },
+  };
+
+  await withServer(createBot({ channel }), async (baseUrl) => {
+    const { response, body } = await postJson(
+      baseUrl,
+      validCommitteeApplication()
+    );
+
+    assert.equal(response.status, 200);
+    assert.equal(body.success, true);
+    assert.equal(sentMessages.length, 1);
+    const embed = sentMessages[0].embeds[0].toJSON();
+    assert.equal(embed.title, '【役職申請】企画長');
+    assert.equal(embed.color, 0x008736);
+    assert.match(embed.description, /IT局 \/ ２年生/);
+    assert.match(embed.fields[0].value, /users登録あり/);
+    assert.match(embed.fields[2].value, /123456789/);
+    assert.equal(embed.footer.text, '申請ID: application-1');
   });
 });
 

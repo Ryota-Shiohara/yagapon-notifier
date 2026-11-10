@@ -38,6 +38,12 @@ export interface ApplicationNotificationData {
   url?: string;
   appliedAt?: string;
   updatedBy?: string;
+  committeeRole?: '企画長' | '副局長' | '局長';
+  bureau?: string;
+  grade?: string;
+  discordUserId?: string;
+  supportUserExists?: boolean;
+  status?: 'pending' | 'approved' | 'rejected';
 }
 
 export type ScheduleAction = 'add' | 'update' | 'delete';

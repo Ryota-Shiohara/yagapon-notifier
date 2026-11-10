@@ -20,6 +20,13 @@ import { NotificationPayload } from '../types/notification';
 
 const SCHEDULE_ACTIONS = new Set(['add', 'update', 'delete']);
 const APPLICATION_EVENTS = new Set(['created', 'updated']);
+const COMMITTEE_APPLICATION_FORM = '委員ロール申請';
+const COMMITTEE_ROLES = new Set(['企画長', '副局長', '局長']);
+const COMMITTEE_APPLICATION_STATUSES = new Set([
+  'pending',
+  'approved',
+  'rejected',
+]);
 const RECEIPT_EVENTS = new Set(['created', 'edited', 'cardStatementUpdated']);
 
 function isNonEmptyString(value: unknown): value is string {
@@ -330,6 +337,12 @@ export function createNotifyRouter(
             section,
             appliedAt,
             updatedBy,
+            committeeRole,
+            bureau,
+            grade,
+            discordUserId,
+            supportUserExists,
+            status,
           } = payload.data;
 
           if (!event || !eventName || !applicant) {
@@ -361,6 +374,11 @@ export function createNotifyRouter(
             ['data.section', section],
             ['data.appliedAt', appliedAt],
             ['data.updatedBy', updatedBy],
+            ['data.committeeRole', committeeRole],
+            ['data.bureau', bureau],
+            ['data.grade', grade],
+            ['data.discordUserId', discordUserId],
+            ['data.status', status],
           ];
 
           const invalidField = optionalStringFields.find(
@@ -374,6 +392,58 @@ export function createNotifyRouter(
               400,
               `${invalidField[0]} must be a string`
             );
+          }
+
+          if (
+            supportUserExists !== undefined &&
+            typeof supportUserExists !== 'boolean'
+          ) {
+            return sendClientError(
+              res,
+              requestId,
+              400,
+              'data.supportUserExists must be a boolean'
+            );
+          }
+
+          if (formType === COMMITTEE_APPLICATION_FORM) {
+            const requiredCommitteeFields: Array<[string, unknown]> = [
+              ['data.applicationId', applicationId],
+              ['data.committeeRole', committeeRole],
+              ['data.bureau', bureau],
+              ['data.grade', grade],
+              ['data.discordUserId', discordUserId],
+              ['data.status', status],
+            ];
+            const missingCommitteeField = requiredCommitteeFields.find(
+              ([, value]) => !isNonEmptyString(value)
+            );
+            if (missingCommitteeField || typeof supportUserExists !== 'boolean') {
+              return sendClientError(
+                res,
+                requestId,
+                400,
+                `Missing required committee application field: ${
+                  missingCommitteeField?.[0] ?? 'data.supportUserExists'
+                }`
+              );
+            }
+            if (!COMMITTEE_ROLES.has(committeeRole as string)) {
+              return sendClientError(
+                res,
+                requestId,
+                400,
+                'Invalid data.committeeRole. Supported values: 企画長, 副局長, 局長'
+              );
+            }
+            if (!COMMITTEE_APPLICATION_STATUSES.has(status as string)) {
+              return sendClientError(
+                res,
+                requestId,
+                400,
+                'Invalid data.status. Supported values: pending, approved, rejected'
+              );
+            }
           }
 
           if (
